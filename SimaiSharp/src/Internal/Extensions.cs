@@ -24,10 +24,9 @@ namespace SimaiSharp.Internal
 		/// and local default codepage, and potentially other codepages.
 		/// </summary>
 		/// <param name="textBytes">The input text</param>
-		/// <param name="text">The string with the discovered encoding applied to the file</param>
 		/// <param name="taster">Number of bytes to check of the file (to save processing).</param>
 		/// <remarks>https://stackoverflow.com/questions/1025332/determine-a-strings-encoding-in-c-sharp</remarks>
-		public static Encoding TryDecodeText(this byte[] textBytes, out string text, int taster = 64)
+		public static Encoding TryGetEncoding(this byte[] textBytes, int taster)
 		{
 			switch (textBytes.Length)
 			{
@@ -35,23 +34,17 @@ namespace SimaiSharp.Internal
 				//////////////// BOM/signature exists (sourced from http://www.unicode.org/faq/utf_bom.html#bom4)
 				case >= 4 when textBytes[0] == 0x00 && textBytes[1] == 0x00 && textBytes[2] == 0xFE &&
 				               textBytes[3] == 0xFF:
-					text = Encoding.GetEncoding("utf-32BE").GetString(textBytes, 4, textBytes.Length - 4);
 					return Encoding.GetEncoding("utf-32BE"); // UTF-32, big-endian 
 				case >= 4 when textBytes[0] == 0xFF && textBytes[1] == 0xFE && textBytes[2] == 0x00 &&
 				               textBytes[3] == 0x00:
-					text = Encoding.UTF32.GetString(textBytes, 4, textBytes.Length - 4);
 					return Encoding.UTF32; // UTF-32, little-endian
 				case >= 2 when textBytes[0] == 0xFE && textBytes[1] == 0xFF:
-					text = Encoding.BigEndianUnicode.GetString(textBytes, 2, textBytes.Length - 2);
 					return Encoding.BigEndianUnicode; // UTF-16, big-endian
 				case >= 2 when textBytes[0] == 0xFF && textBytes[1] == 0xFE:
-					text = Encoding.Unicode.GetString(textBytes, 2, textBytes.Length - 2);
 					return Encoding.Unicode; // UTF-16, little-endian
 				case >= 3 when textBytes[0] == 0xEF && textBytes[1] == 0xBB && textBytes[2] == 0xBF:
-					text = Encoding.UTF8.GetString(textBytes, 3, textBytes.Length - 3);
 					return Encoding.UTF8; // UTF-8
 				case >= 3 when textBytes[0] == 0x2b && textBytes[1] == 0x2f && textBytes[2] == 0x76:
-					text = Encoding.UTF7.GetString(textBytes, 3, textBytes.Length - 3);
 					return Encoding.UTF7; // UTF-7
 			}
 
@@ -110,7 +103,6 @@ namespace SimaiSharp.Internal
 
 			if (utf8)
 			{
-				text = Encoding.UTF8.GetString(textBytes);
 				return Encoding.UTF8;
 			}
 
@@ -126,7 +118,6 @@ namespace SimaiSharp.Internal
 					count++;
 			if (((double)count) / taster > threshold)
 			{
-				text = Encoding.BigEndianUnicode.GetString(textBytes);
 				return Encoding.BigEndianUnicode;
 			}
 
@@ -136,7 +127,6 @@ namespace SimaiSharp.Internal
 					count++;
 			if (((double)count) / taster > threshold)
 			{
-				text = Encoding.Unicode.GetString(textBytes);
 				return Encoding.Unicode;
 			} // (little-endian)
 
@@ -179,7 +169,6 @@ namespace SimaiSharp.Internal
 				try
 				{
 					var internalEnc = Encoding.ASCII.GetString(nb);
-					text = Encoding.GetEncoding(internalEnc).GetString(textBytes);
 					return Encoding.GetEncoding(internalEnc);
 				}
 				catch
@@ -194,7 +183,6 @@ namespace SimaiSharp.Internal
 			// definitely) the user's local codepage! One might present to the user a
 			// list of alternative encodings as shown here: https://stackoverflow.com/questions/8509339/what-is-the-most-common-encoding-of-each-language
 			// A full list can be found using Encoding.GetEncodings();
-			text = Encoding.Default.GetString(textBytes);
 			return Encoding.Default;
 		}
 	}

@@ -1,4 +1,5 @@
-﻿using SimaiSharp.Internal;
+﻿using System;
+using SimaiSharp.Internal;
 using SimaiSharp.Structures;
 
 namespace SimaiSharp
@@ -7,7 +8,7 @@ namespace SimaiSharp
 	{
 		public static MaiChart Deserialize(string value)
 		{
-			var tokens = new Tokenizer(value).GetTokens().ToArray();
+			var tokens = new Tokenizer(value).GetTokens();
 			var chart  = new Deserializer(tokens).GetChart();
 
 			return chart;

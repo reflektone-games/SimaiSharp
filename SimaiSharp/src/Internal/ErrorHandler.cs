@@ -4,9 +4,14 @@ namespace SimaiSharp.Internal
 {
 	internal static class ErrorHandler
 	{
-		public static void Report(int line, int character, string location, string message)
+		public static void TokenizationError(int line, int character, string location, string message)
 		{
 			throw new SimaiException(line, character, location, message);
+		}
+
+		public static void DeserializationError(Token token, string message)
+		{
+			throw new SimaiException($"{token} - {message}");
 		}
 	}
 	
@@ -15,6 +20,10 @@ namespace SimaiSharp.Internal
 	{
 		public SimaiException(int line, int character, string location, string message)
 			: base($"Error: {message} at {location} ({line}, {character})")
+		{ }
+		
+		public SimaiException(string message)
+			: base($"Error: {message}")
 		{ }
 	}
 }

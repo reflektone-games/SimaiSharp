@@ -1,8 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+using System.Text;
 using SimaiSharp.Internal;
 
 namespace SimaiSharp
@@ -16,25 +15,56 @@ namespace SimaiSharp
 			_fullFilePath = path;
 		}
 
-		public async Task<IEnumerable<KeyValuePair<string, string>>> ToKeyValuePairs()
+		public IEnumerable<KeyValuePair<string, string>> ToKeyValuePairs()
 		{
-			var bytes = await File.ReadAllBytesAsync(_fullFilePath);
-			bytes.TryDecodeText(out var rawData);
+			const int sampleSize = 64;
 
-			var parameterPairs = Regex.Split(rawData, @"\n+(?=&)", RegexOptions.Multiline)
-			                          .Select(Extensions.RemoveLineEndings);
+			using var fileStream = new FileStream(_fullFilePath, FileMode.Open, FileAccess.Read);
 
-			return parameterPairs
-			       .Where(parameterPair => !string.IsNullOrEmpty(parameterPair) && parameterPair.Contains('='))
-			       .Select(parameterPair => parameterPair.Split(new[] { '=' }, 2))
-			       // skips the first character (&) in the key
-			       .Select(parameterArray =>
-				               new KeyValuePair<string, string>(parameterArray[0][1..], parameterArray[1]));
+			// Determine the encoding of the file
+			var buffer       = new byte[64];
+			var numCharsRead = fileStream.Read(buffer, 0, 64);
+			var encoding     = buffer[..numCharsRead].TryGetEncoding(sampleSize);
+
+			using var reader = new StreamReader(fileStream, encoding);
+			// We've already read 64 chars in line 27, so we'll reset here.
+			reader.BaseStream.Position = 0;
+
+			var currentKey   = "";
+			var currentValue = new StringBuilder();
+
+			while (!reader.EndOfStream)
+			{
+				var line = reader.ReadLine();
+
+				if (line == null)
+					break;
+				
+				if (line.StartsWith('&'))
+				{
+					if (currentKey != string.Empty)
+					{
+						yield return new KeyValuePair<string, string>(currentKey, currentValue.ToString());
+						currentValue.Clear();
+					}
+
+					var keyValuePair = line.Split('=', 2);
+					currentKey = keyValuePair[0][1..];
+					currentValue.AppendLine(keyValuePair[1]);
+				}
+				else
+				{
+					currentValue.AppendLine(line);
+				}
+			}
+
+			// Add the last entry
+			yield return new KeyValuePair<string, string>(currentKey, currentValue.ToString());
 		}
 
-		public async ValueTask<string> GetValue(string key)
+		public string GetValue(string key)
 		{
-			return (await ToKeyValuePairs()).FirstOrDefault(parameterPair => parameterPair.Key == key).Value;
+			return ToKeyValuePairs().FirstOrDefault(parameterPair => parameterPair.Key == key).Value;
 		}
 	}
 }
