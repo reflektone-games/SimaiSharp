@@ -1,4 +1,6 @@
-﻿namespace SimaiSharp.Structures
+﻿using System;
+
+namespace SimaiSharp.Structures
 {
 	public struct Location
 	{
@@ -9,10 +11,18 @@
 
 		public NoteGroup group;
 
-		public Location(NoteGroup group, int index)
+		public override string ToString()
 		{
-			this.group = group;
-			this.index = index;
+			return group switch
+			       {
+				       NoteGroup.Tap     => index.ToString(),
+				       NoteGroup.ASensor => "A" + index,
+				       NoteGroup.BSensor => "B" + index,
+				       NoteGroup.CSensor => "C" + index,
+				       NoteGroup.DSensor => "D" + index,
+				       NoteGroup.ESensor => "E" + index,
+				       _                 => throw new ArgumentOutOfRangeException()
+			       };
 		}
 	}
 }

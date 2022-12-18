@@ -8,5 +8,10 @@ namespace SimaiSharp.Structures
 	{
 		public List<NoteCollection> noteCollections = new();
 		public float?               finishTiming;
+
+		public void AddCollection(NoteCollection noteCollection)
+		{
+			noteCollections.Add(noteCollection);
+		}
 	}
 }

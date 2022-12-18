@@ -1,18 +1,23 @@
 namespace SimaiSharp.Internal
 {
-	internal readonly struct TimingChange
+	internal struct TimingChange
 	{
-		public readonly float time;
-		public readonly float tempo;
-		public readonly float subdivisions;
+		public float tempo;
+		public float subdivisions;
 
-		public float SecondsPerBeat => tempo <= 0 ? 0 : 60f / tempo / (subdivisions / 4);
+		private float SecondsPerBar  => 60f / tempo;
+		public  float SecondsPerBeat => tempo <= 0 ? 0 : SecondsPerBar / (subdivisions / 4);
 
-		public TimingChange(float time, float tempo, float subdivisions = 4)
+		public void ExplicitOverride(float value)
+		{
+			tempo        = 60f / value;
+			subdivisions = 4;
+		}
+
+		public TimingChange(float tempo, float subdivisions = 4)
 		{
 			this.tempo        = tempo;
 			this.subdivisions = subdivisions;
-			this.time         = time;
 		}
 	}
 }
