@@ -1,6 +1,6 @@
 using System;
 
-namespace SimaiSharp.Internal
+namespace SimaiSharp.Internal.LexicalAnalysis
 {
 	internal readonly struct Token
 	{

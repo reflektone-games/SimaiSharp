@@ -1,6 +1,6 @@
 ﻿using SimaiSharp.Structures;
 
-namespace SimaiSharp.Internal
+namespace SimaiSharp.Internal.LexicalAnalysis
 {
 	internal enum TokenType
 	{

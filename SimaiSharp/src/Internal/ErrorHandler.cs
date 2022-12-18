@@ -1,17 +1,18 @@
 ﻿using System;
+using SimaiSharp.Internal.LexicalAnalysis;
 
 namespace SimaiSharp.Internal
 {
 	internal static class ErrorHandler
 	{
-		public static void TokenizationError(int line, int character, string location, string message)
+		public static Exception TokenizationError(int line, int character, string location, string message)
 		{
-			throw new SimaiException(line, character, location, message);
+			return new SimaiException(line, character, location, message);
 		}
 
-		public static void DeserializationError(Token token, string message)
+		public static Exception DeserializationError(Token token, string message)
 		{
-			throw new SimaiException($"{token} - {message}");
+			return new SimaiException($"{token} - {message}");
 		}
 	}
 	

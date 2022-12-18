@@ -1,5 +1,7 @@
 ﻿using System;
 using SimaiSharp.Internal;
+using SimaiSharp.Internal.LexicalAnalysis;
+using SimaiSharp.Internal.Parsing;
 using SimaiSharp.Structures;
 
 namespace SimaiSharp

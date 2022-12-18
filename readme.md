@@ -18,4 +18,4 @@ SimaiConvert.Deserialize(string value);
 
 # Contribute
 
-Issues and pull requests are welcomed!
+Issues and pull requests are welcome!

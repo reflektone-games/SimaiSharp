@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace SimaiSharp.Internal
+namespace SimaiSharp.Internal.LexicalAnalysis
 {
 	internal sealed class Tokenizer
 	{
@@ -17,7 +17,7 @@ namespace SimaiSharp.Internal
 			while (!IsAtEnd)
 			{
 				_start = _current;
-				
+
 				var nextToken = ScanToken();
 				if (nextToken.HasValue)
 					yield return nextToken.Value;
@@ -32,7 +32,7 @@ namespace SimaiSharp.Internal
 			{
 				case ',':
 					return CompileToken(TokenType.TimeStep);
-				
+
 				case '(':
 					return CompileSectionDeclaration(TokenType.Tempo, ')');
 				case '{':
@@ -70,8 +70,7 @@ namespace SimaiSharp.Internal
 					return CompileToken(TokenType.EndOfFile);
 
 				default:
-					ErrorHandler.TokenizationError(_line, _item, c.ToString(), "Unexpected character.");
-					return null;
+					throw ErrorHandler.TokenizationError(_line, _item, c.ToString(), "Unexpected character.");
 			}
 		}
 
@@ -85,39 +84,34 @@ namespace SimaiSharp.Internal
 				return true;
 			}
 
-			if (IsSensorLocation(firstLocationChar))
+			length = 0;
+
+			if (!IsSensorLocation(firstLocationChar)) return false;
+			
+			var secondLocationChar = Peek();
+
+			if (IsButtonLocation(secondLocationChar))
 			{
-				var secondLocationChar = Peek();
-
-				if (IsButtonLocation(secondLocationChar))
-				{
-					length = 2;
-					return true;
-				}
-
-				if (firstLocationChar == 'C')
-				{
-					length = 1;
-					return true;
-				}
-
-				var secondCharIsEmpty = SeparatorChars.Contains(secondLocationChar) ||
-				                      secondLocationChar is '\n' or '\0';
-				
-				// This is the notation for EOF.
-				if (firstLocationChar == 'E' && secondCharIsEmpty)
-				{
-					length = 0;
-					return false;
-				}
-					
-				ErrorHandler.TokenizationError(_line, _item, secondLocationChar.ToString(), "Invalid touch note expression.");
-				length = 0;
-				return false;
+				length = 2;
+				return true;
 			}
 
-			length = 0;
-			return false;
+			if (firstLocationChar == 'C')
+			{
+				length = 1;
+				return true;
+			}
+
+			var secondCharIsEmpty = SeparatorChars.Contains(secondLocationChar) ||
+			                        secondLocationChar is '\n' or '\0';
+
+			// This is the notation for EOF.
+			if (firstLocationChar == 'E' && secondCharIsEmpty)
+				return false;
+
+			throw ErrorHandler.TokenizationError(_line, _item, secondLocationChar.ToString(),
+			                                     "Invalid touch note expression.");
+
 		}
 
 		private bool IsReadingSlideDeclaration(out int length)
@@ -140,10 +134,9 @@ namespace SimaiSharp.Internal
 			while (Peek() != terminator)
 			{
 				if (IsAtEnd)
-				{
-					ErrorHandler.TokenizationError(_line, _item, _sequence.Span[_start..(_current - 1)].ToString(), "Unterminated tempo.");
-					return null;
-				}
+					throw ErrorHandler.TokenizationError(_line, _item,
+					                                     _sequence.Span[_start..(_current - 1)].ToString(),
+					                                     "Unterminated tempo.");
 
 				Advance();
 			}
@@ -152,7 +145,7 @@ namespace SimaiSharp.Internal
 
 			// The terminator.
 			Advance();
-			
+
 			return token;
 		}
 
@@ -162,8 +155,15 @@ namespace SimaiSharp.Internal
 			return new Token(type, text, _line);
 		}
 
-		private static bool IsSensorLocation(char value) => value is >= 'A' and <= 'E';
-		private static bool IsButtonLocation(char value) => value is >= '0' and <= '9';
+		private static bool IsSensorLocation(char value)
+		{
+			return value is >= 'A' and <= 'E';
+		}
+
+		private static bool IsButtonLocation(char value)
+		{
+			return value is >= '1' and <= '8';
+		}
 
 		private const char Space            = (char)0x0020;
 		private const char EnSpace          = (char)0x2002;
@@ -186,7 +186,7 @@ namespace SimaiSharp.Internal
 			                                                   'p', 'q',
 			                                                   'v', 'V',
 			                                                   's', 'z',
-			                                                   'w',
+			                                                   'w'
 		                                                   };
 
 		private static readonly HashSet<char> SeparatorChars = new()
@@ -207,22 +207,28 @@ namespace SimaiSharp.Internal
 		}
 
 		/// <summary>
-		/// Returns the <see cref="_current"/> glyph, and increments by one.
+		///     Returns the <see cref="_current" /> glyph, and increments by one.
 		/// </summary>
-		private char Advance() =>
-			_sequence.Span[_current++];
+		private char Advance()
+		{
+			return _sequence.Span[_current++];
+		}
 
 		/// <summary>
-		/// Returns the <see cref="_current"/> glyph without incrementing.
+		///     Returns the <see cref="_current" /> glyph without incrementing.
 		/// </summary>
-		private char Peek() =>
-			IsAtEnd ? default : _sequence.Span[_current];
+		private char Peek()
+		{
+			return IsAtEnd ? default : _sequence.Span[_current];
+		}
 
 		/// <summary>
-		/// Returns the last glyph without decrementing.
+		///     Returns the last glyph without decrementing.
 		/// </summary>
-		private char PeekPrevious() =>
-			_current == 0 ? default : _sequence.Span[_current - 1];
+		private char PeekPrevious()
+		{
+			return _current == 0 ? default : _sequence.Span[_current - 1];
+		}
 
 		private bool IsAtEnd => _current >= _sequence.Length;
 	}
