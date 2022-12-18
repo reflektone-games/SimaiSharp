@@ -1,4 +1,4 @@
-namespace SimaiSharp.Internal
+namespace SimaiSharp.Internal.SyntacticAnalysis
 {
 	internal struct TimingChange
 	{

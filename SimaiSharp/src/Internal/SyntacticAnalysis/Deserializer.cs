@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using SimaiSharp.Internal.LexicalAnalysis;
-using SimaiSharp.Internal.Parsing.States;
+using SimaiSharp.Internal.SyntacticAnalysis.States;
 using SimaiSharp.Structures;
 
-namespace SimaiSharp.Internal.Parsing
+namespace SimaiSharp.Internal.SyntacticAnalysis
 {
 	internal class Deserializer : IDisposable
 	{

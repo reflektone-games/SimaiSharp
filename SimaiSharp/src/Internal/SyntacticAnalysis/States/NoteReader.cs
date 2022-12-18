@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 using SimaiSharp.Internal.LexicalAnalysis;
 using SimaiSharp.Structures;
 
-namespace SimaiSharp.Internal.Parsing.States
+namespace SimaiSharp.Internal.SyntacticAnalysis.States
 {
 	internal static class NoteReader
 	{

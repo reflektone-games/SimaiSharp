@@ -1,6 +1,6 @@
 using SimaiSharp.Internal.LexicalAnalysis;
 
-namespace SimaiSharp.Internal.Parsing.States
+namespace SimaiSharp.Internal.SyntacticAnalysis.States
 {
 	internal static class TempoReader
 	{
