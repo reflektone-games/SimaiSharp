@@ -10,7 +10,7 @@ namespace SimaiSharp.Internal
 			return new SimaiException(line, character, location, message);
 		}
 
-		public static Exception DeserializationError(Token token, string message)
+		public static Exception DeserializationError(in Token token, string message)
 		{
 			return new SimaiException($"{token} - {message}");
 		}

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using SimaiSharp.Internal.LexicalAnalysis;
 using SimaiSharp.Structures;
 
@@ -8,96 +7,112 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 {
 	internal static class NoteReader
 	{
-		public static void Process(Deserializer parent, Token token)
+		public static Note Process(Deserializer parent, Token identityToken)
 		{
-			parent.currentNoteCollection ??= new NoteCollection(parent.currentTime);
-
-			if (!Deserializer.TryReadLocation(token, out var noteLocation))
-				throw ErrorHandler.DeserializationError(token, $"Invalid location declaration.");
+			if (!Deserializer.TryReadLocation(in identityToken, out var noteLocation))
+				throw ErrorHandler.DeserializationError(identityToken, $"Invalid location declaration.");
 
 			var currentNote = new Note
 			                  {
 				                  location = noteLocation
 			                  };
 
-			while (parent.enumerator.MoveNext())
-			{
-				var decorationToken = parent.enumerator.Current;
+			if (noteLocation.group != NoteGroup.Tap)
+				currentNote.type = NoteType.Touch;
+			
+			// Some readers (e.g. NoteReader) moves the enumerator automatically.
+			// We can skip moving the pointer if that's satisfied.
+			var manuallyMoved = false;
 
-				switch (decorationToken.type)
+			while (manuallyMoved || parent.enumerator.MoveNext())
+			{
+				var token = parent.enumerator.Current;
+				manuallyMoved = false;
+
+				switch (token.type)
 				{
 					case TokenType.Tempo:
-						break;
+						throw ErrorHandler.DeserializationError(in token,
+						                                        "Tempo should be declared outside of note scope.");
 					case TokenType.Subdivision:
-						break;
-					case TokenType.Location:
-						break;
+						throw ErrorHandler.DeserializationError(in token,
+						                                        "Subdivision should be declared outside of note scope.");
 					case TokenType.Decorator:
+					{
+						DecorateNote(in token, ref currentNote);
 						break;
+					}
 					case TokenType.Slide:
 					{
-						var validSlideString =
-							MemoryMarshal.TryGetString(token.lexeme, out var text, out var start, out var length);
-
-						if (!validSlideString)
-						{
-							throw ErrorHandler.DeserializationError(token, "Failed to get string from slide literal.");
-						}
-
-						var segment   = new SlideSegment(new List<Location>());
-						var slideText = text[start..(start + length - 1)];
-
-						do
-						{
-							if (!parent.enumerator.MoveNext())
-							{
-								ErrorHandler.DeserializationError(token, "Unexpected end of file reached.");
-								break;
-							}
-
-							var current = parent.enumerator.Current;
-							if (Deserializer.TryReadLocation(current, out var location))
-							{
-								segment.vertices.Add(location);
-							}
-						} while (parent.enumerator.Current.type != TokenType.Location);
-
-						segment.slideType = slideText switch
-						                    {
-							                    "-" => SlideType.StraightLine,
-							                    ">" => Deserializer.DetermineRingType(currentNote.location, segment.vertices[0], 1),
-							                    "<" => Deserializer.DetermineRingType(currentNote.location, segment.vertices[0], -1),
-							                    "^" => Deserializer.DetermineRingType(currentNote.location, segment.vertices[0]),
-							                    "qq" => SlideType.EdgeCurveCw,
-							                    "q" => SlideType.CurveCw,
-							                    "pp" => SlideType.EdgeCurveCcw,
-							                    "p" => SlideType.CurveCcw,
-							                    "v" => SlideType.Fold,
-							                    "V" => SlideType.EdgeFold,
-							                    "s" => SlideType.ZigZagS,
-							                    "z" => SlideType.ZigZagZ,
-							                    "w" => SlideType.Fan,
-							                    _ => throw ErrorHandler.DeserializationError(token,
-								                         "Slide type not recognized.")
-						                    };
+						var slide   = SlideReader.Process(parent, in currentNote, in token);
+						manuallyMoved = true;
+						
+						currentNote.slidePaths ??= new List<SlidePath>();
+						currentNote.slidePaths.Add(slide);
 						break;
 					}
 					case TokenType.Duration:
+					{
+						ReadDuration(in token, in parent.currentTiming, ref currentNote);
 						break;
+					}
 					case TokenType.SlideJoiner:
-						break;
+						throw ErrorHandler.DeserializationError(in token,
+						                                        "Slide joiners should be declared in slide scopes.");
 					case TokenType.TimeStep:
-						break;
 					case TokenType.EachDivider:
-						break;
 					case TokenType.EndOfFile:
-						break;
+					case TokenType.Location:
+						// note terminates here
+						return currentNote;
 					default:
 						throw new ArgumentOutOfRangeException();
 				}
 			}
 
-			parent.currentNoteCollection.AddNote(currentNote);
+			return currentNote;
+		}
+
+		private static void DecorateNote(in Token token, ref Note note)
+		{
+			switch (token.lexeme.Span[0])
+			{
+				case 'b':
+					// always override note type
+					note.type = NoteType.Break;
+					return;
+				case 'h' when note.type != NoteType.Break:
+					note.type   =   NoteType.Hold;
+					note.length ??= 0;
+					return;
+				case 'x':
+					note.styles |= NoteStyle.Ex;
+					return;
+				case 'f':
+					note.styles |= NoteStyle.Fireworks;
+					return;
+			}
+		}
+
+		private static void ReadDuration(in Token token, in TimingChange timing, ref Note note)
+		{
+			if (token.lexeme.Span[0] == '#')
+			{
+				if (!float.TryParse(token.lexeme.Span[1..], out var explicitValue))
+					throw ErrorHandler.DeserializationError(token, "Invalid explicit hold duration syntax.");
+
+				note.length = explicitValue;
+				return;
+			}
+
+			var indexOfSeparator = token.lexeme.Span.IndexOf(':');
+			if (!float.TryParse(token.lexeme.Span[..indexOfSeparator], out var nominator))
+				throw ErrorHandler.DeserializationError(token, "Invalid hold duration nominator.");
+
+			if (!float.TryParse(token.lexeme.Span[(indexOfSeparator + 1)..], out var denominator))
+				throw ErrorHandler.DeserializationError(token, "Invalid hold duration denominator.");
+
+			note.length = timing.SecondsPerBar / (nominator / 4) * denominator;
 		}
 	}
 }

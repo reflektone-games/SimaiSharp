@@ -4,20 +4,17 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 	{
 		public float tempo;
 		public float subdivisions;
-
-		private float SecondsPerBar  => 60f / tempo;
-		public  float SecondsPerBeat => tempo <= 0 ? 0 : SecondsPerBar / (subdivisions / 4);
+		
+		/// <summary>
+		/// Used in duration parsing.
+		/// </summary>
+		public float SecondsPerBar => tempo == 0 ? 0 : 60f / tempo;
+		public float SecondsPerBeat => SecondsPerBar / (subdivisions / 4);
 
 		public void ExplicitOverride(float value)
 		{
 			tempo        = 60f / value;
 			subdivisions = 4;
-		}
-
-		public TimingChange(float tempo, float subdivisions = 4)
-		{
-			this.tempo        = tempo;
-			this.subdivisions = subdivisions;
 		}
 	}
 }

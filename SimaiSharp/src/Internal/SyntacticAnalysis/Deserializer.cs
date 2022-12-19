@@ -26,12 +26,12 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 		{
 			// Some readers (e.g. NoteReader) moves the enumerator automatically.
 			// We can skip moving the pointer if that's satisfied.
-			var alreadyMoved = false;
+			var manuallyMoved = false;
 
-			while (alreadyMoved || enumerator.MoveNext())
+			while (manuallyMoved || enumerator.MoveNext())
 			{
 				var token = enumerator.Current;
-				alreadyMoved = false;
+				manuallyMoved = false;
 
 				switch (token.type)
 				{
@@ -47,21 +47,13 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 					}
 					case TokenType.Location:
 					{
-						NoteReader.Process(this, token);
-						alreadyMoved = true;
+						var note = NoteReader.Process(this, token);
+						manuallyMoved = true;
+						
+						currentNoteCollection ??= new NoteCollection(currentTime);
+						currentNoteCollection.AddNote(ref note);
 						break;
 					}
-					case TokenType.Decorator:
-						throw ErrorHandler.DeserializationError(token, "Decorators should be attached to notes.");
-					case TokenType.Slide:
-						throw ErrorHandler.DeserializationError(token, "Slides should be attached to notes.");
-					case TokenType.Duration:
-						throw ErrorHandler.DeserializationError(token,
-						                                        "Duration should be either attached to notes, or slides.");
-					case TokenType.SlideJoiner:
-						throw ErrorHandler.DeserializationError(token, "Slide joiners should be attached to slides.");
-					case TokenType.EachDivider:
-						throw ErrorHandler.DeserializationError(token, "Each dividers should be attached to notes.");
 					case TokenType.TimeStep:
 					{
 						if (currentNoteCollection != null)
@@ -73,6 +65,17 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 						currentTime += currentTiming.SecondsPerBeat;
 					}
 						break;
+					case TokenType.EachDivider:
+						break;
+					case TokenType.Decorator:
+						throw ErrorHandler.DeserializationError(token, "Decorators should be attached to notes.");
+					case TokenType.Slide:
+						throw ErrorHandler.DeserializationError(token, "Slides should be attached to notes.");
+					case TokenType.Duration:
+						throw ErrorHandler.DeserializationError(token,
+						                                        "Duration should be either attached to notes, or slides.");
+					case TokenType.SlideJoiner:
+						throw ErrorHandler.DeserializationError(token, "Slide joiners should be attached to slides.");
 					case TokenType.EndOfFile:
 						_chart.finishTiming = currentTime;
 						break;
@@ -110,7 +113,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 			}
 		}
 
-		internal static bool TryReadLocation(Token token, out Location value)
+		internal static bool TryReadLocation(in Token token, out Location value)
 		{
 			value = new Location();
 

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace SimaiSharp.Structures
 {
 	[Serializable]
-	public sealed class NoteCollection : List<Note>
+	public sealed class NoteCollection : HashSet<Note>
 	{
 		public EachStyle eachStyle;
 		public float     time;
@@ -14,7 +14,7 @@ namespace SimaiSharp.Structures
 			this.time = time;
 		}
 
-		public void AddNote(Note n)
+		public void AddNote(ref Note n)
 		{
 			n.parentCollection = this;
 			Add(n);

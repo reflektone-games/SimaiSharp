@@ -135,7 +135,7 @@ namespace SimaiSharp.Internal.LexicalAnalysis
 			{
 				if (IsAtEnd)
 					throw ErrorHandler.TokenizationError(_line, _item,
-					                                     _sequence.Span[_start..(_current - 1)].ToString(),
+					                                     _sequence.Span[_start.._current].ToString(),
 					                                     "Unterminated tempo.");
 
 				Advance();

@@ -10,11 +10,13 @@ namespace SimaiSharp.Structures
 		public readonly List<Location> vertices;
 
 		public SlideType slideType;
+		public bool      isBreak;
 
 		public SlideSegment(List<Location>? vertices = null)
 		{
 			this.vertices = vertices ?? new List<Location>();
 			slideType     = SlideType.StraightLine;
+			isBreak       = false;
 		}
 	}
 }
