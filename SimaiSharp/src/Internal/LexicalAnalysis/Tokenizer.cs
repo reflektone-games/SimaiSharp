@@ -16,7 +16,7 @@ namespace SimaiSharp.Internal.LexicalAnalysis
 		private static readonly HashSet<char> DecoratorChars = new()
 		                                                       {
 			                                                       'f', 'b', 'x', 'h',
-			                                                       '!', '?'
+			                                                       '!', '?', '`'
 		                                                       };
 
 		private static readonly HashSet<char> SlideChars = new()

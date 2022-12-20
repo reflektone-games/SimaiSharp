@@ -11,15 +11,15 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 		internal readonly IEnumerator<Token> enumerator;
 		private readonly  MaiChart           _chart = new();
 		internal          TimingChange       currentTiming;
-		private           NoteCollection?    _currentNoteCollection;
+		internal          NoteCollection?    currentNoteCollection;
 		private           float              _currentTime;
 
 		public Deserializer(IEnumerable<Token> sequence)
 		{
-			enumerator             = sequence.GetEnumerator();
-			currentTiming          = new TimingChange();
-			_currentNoteCollection = null;
-			_currentTime           = 0;
+			enumerator            = sequence.GetEnumerator();
+			currentTiming         = new TimingChange();
+			currentNoteCollection = null;
+			_currentTime          = 0;
 		}
 
 		public void Dispose()
@@ -52,19 +52,19 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 					}
 					case TokenType.Location:
 					{
-						var note = NoteReader.Process(this, token);
-						manuallyMoved = true;
+						currentNoteCollection ??= new NoteCollection(_currentTime);
 
-						_currentNoteCollection ??= new NoteCollection(_currentTime);
-						_currentNoteCollection.AddNote(ref note);
+						var note = NoteReader.Process(this, token);
+						currentNoteCollection.AddNote(ref note);
+						manuallyMoved = true;
 						break;
 					}
 					case TokenType.TimeStep:
 					{
-						if (_currentNoteCollection != null)
+						if (currentNoteCollection != null)
 						{
-							_chart.AddCollection(_currentNoteCollection);
-							_currentNoteCollection = null;
+							_chart.AddCollection(currentNoteCollection);
+							currentNoteCollection = null;
 						}
 
 						_currentTime += currentTiming.SecondsPerBeat;
