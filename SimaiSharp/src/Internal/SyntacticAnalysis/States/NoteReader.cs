@@ -10,7 +10,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 		public static Note Process(Deserializer parent, Token identityToken)
 		{
 			if (!Deserializer.TryReadLocation(in identityToken, out var noteLocation))
-				throw ErrorHandler.DeserializationError(identityToken, $"Invalid location declaration.");
+				throw ErrorHandler.DeserializationError(identityToken, "Invalid location declaration.");
 
 			var currentNote = new Note
 			                  {
@@ -19,7 +19,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 
 			if (noteLocation.group != NoteGroup.Tap)
 				currentNote.type = NoteType.Touch;
-			
+
 			// Some readers (e.g. NoteReader) moves the enumerator automatically.
 			// We can skip moving the pointer if that's satisfied.
 			var manuallyMoved = false;
@@ -44,9 +44,9 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 					}
 					case TokenType.Slide:
 					{
-						var slide   = SlideReader.Process(parent, in currentNote, in token);
+						var slide = SlideReader.Process(parent, in currentNote, in token);
 						manuallyMoved = true;
-						
+
 						currentNote.slidePaths ??= new List<SlidePath>();
 						currentNote.slidePaths.Add(slide);
 						break;

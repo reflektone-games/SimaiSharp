@@ -5,12 +5,55 @@ namespace SimaiSharp.Internal.LexicalAnalysis
 {
 	internal sealed class Tokenizer
 	{
+		private const char Space            = (char)0x0020;
+		private const char EnSpace          = (char)0x2002;
+		private const char PunctuationSpace = (char)0x2008;
+		private const char IdeographicSpace = (char)0x3000;
+
+		private const char LineSeparator      = (char)0x2028;
+		private const char ParagraphSeparator = (char)0x2029;
+
+		private static readonly HashSet<char> DecoratorChars = new()
+		                                                       {
+			                                                       'f', 'b', 'x', 'h',
+			                                                       '!', '?'
+		                                                       };
+
+		private static readonly HashSet<char> SlideChars = new()
+		                                                   {
+			                                                   '-',
+			                                                   '>', '<', '^',
+			                                                   'p', 'q',
+			                                                   'v', 'V',
+			                                                   's', 'z',
+			                                                   'w'
+		                                                   };
+
+		private static readonly HashSet<char> SeparatorChars = new()
+		                                                       {
+			                                                       '\r',
+			                                                       '\t',
+			                                                       LineSeparator,
+			                                                       ParagraphSeparator,
+			                                                       Space,
+			                                                       EnSpace,
+			                                                       PunctuationSpace,
+			                                                       IdeographicSpace
+		                                                       };
+
 		private readonly ReadOnlyMemory<char> _sequence;
+		private          int                  _current;
+		private          int                  _item;
+		private          int                  _line = 1;
 
 		private int _start;
-		private int _current;
-		private int _item;
-		private int _line = 1;
+
+		public Tokenizer(string sequence)
+		{
+			_sequence = sequence.AsMemory();
+		}
+
+		private bool IsAtEnd => _current >= _sequence.Length;
 
 		public IEnumerable<Token> GetTokens()
 		{
@@ -87,7 +130,7 @@ namespace SimaiSharp.Internal.LexicalAnalysis
 			length = 0;
 
 			if (!IsSensorLocation(firstLocationChar)) return false;
-			
+
 			var secondLocationChar = Peek();
 
 			if (IsButtonLocation(secondLocationChar))
@@ -111,7 +154,6 @@ namespace SimaiSharp.Internal.LexicalAnalysis
 
 			throw ErrorHandler.TokenizationError(_line, _item, secondLocationChar.ToString(),
 			                                     "Invalid touch note expression.");
-
 		}
 
 		private bool IsReadingSlideDeclaration(out int length)
@@ -165,47 +207,6 @@ namespace SimaiSharp.Internal.LexicalAnalysis
 			return value is >= '1' and <= '8';
 		}
 
-		private const char Space            = (char)0x0020;
-		private const char EnSpace          = (char)0x2002;
-		private const char PunctuationSpace = (char)0x2008;
-		private const char IdeographicSpace = (char)0x3000;
-
-		private const char LineSeparator      = (char)0x2028;
-		private const char ParagraphSeparator = (char)0x2029;
-
-		private static readonly HashSet<char> DecoratorChars = new()
-		                                                       {
-			                                                       'f', 'b', 'x', 'h',
-			                                                       '!', '?'
-		                                                       };
-
-		private static readonly HashSet<char> SlideChars = new()
-		                                                   {
-			                                                   '-',
-			                                                   '>', '<', '^',
-			                                                   'p', 'q',
-			                                                   'v', 'V',
-			                                                   's', 'z',
-			                                                   'w'
-		                                                   };
-
-		private static readonly HashSet<char> SeparatorChars = new()
-		                                                       {
-			                                                       '\r',
-			                                                       '\t',
-			                                                       LineSeparator,
-			                                                       ParagraphSeparator,
-			                                                       Space,
-			                                                       EnSpace,
-			                                                       PunctuationSpace,
-			                                                       IdeographicSpace
-		                                                       };
-
-		public Tokenizer(string sequence)
-		{
-			_sequence = sequence.AsMemory();
-		}
-
 		/// <summary>
 		///     Returns the <see cref="_current" /> glyph, and increments by one.
 		/// </summary>
@@ -229,7 +230,5 @@ namespace SimaiSharp.Internal.LexicalAnalysis
 		{
 			return _current == 0 ? default : _sequence.Span[_current - 1];
 		}
-
-		private bool IsAtEnd => _current >= _sequence.Length;
 	}
 }

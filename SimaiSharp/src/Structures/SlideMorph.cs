@@ -2,8 +2,8 @@ namespace SimaiSharp.Structures
 {
 	public enum SlideMorph
 	{
-		Hidden,
+		Original,
 		Hinted,
-		Original
+		Hidden
 	}
 }

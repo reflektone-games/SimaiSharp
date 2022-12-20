@@ -8,11 +8,11 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 {
 	internal class Deserializer : IDisposable
 	{
-		internal readonly IEnumerator<Token> enumerator;
 		private readonly  MaiChart           _chart = new();
-		internal          TimingChange       currentTiming;
+		internal readonly IEnumerator<Token> enumerator;
 		internal          NoteCollection?    currentNoteCollection;
 		internal          float              currentTime;
+		internal          TimingChange       currentTiming;
 
 		public Deserializer(IEnumerable<Token> sequence)
 		{
@@ -20,6 +20,11 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 			currentTiming         = new TimingChange();
 			currentNoteCollection = null;
 			currentTime           = 0;
+		}
+
+		public void Dispose()
+		{
+			enumerator.Dispose();
 		}
 
 		public MaiChart GetChart()
@@ -49,7 +54,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 					{
 						var note = NoteReader.Process(this, token);
 						manuallyMoved = true;
-						
+
 						currentNoteCollection ??= new NoteCollection(currentTime);
 						currentNoteCollection.AddNote(ref note);
 						break;
@@ -135,11 +140,6 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 			// Convert from 1-indexed to 0-indexed
 			value.index = indexInGroup - 1;
 			return true;
-		}
-
-		public void Dispose()
-		{
-			enumerator.Dispose();
 		}
 	}
 }

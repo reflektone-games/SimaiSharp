@@ -20,8 +20,8 @@ namespace SimaiSharp.Internal
 		}
 
 		/// <summary>
-		/// Function to detect the encoding for UTF-7, UTF-8/16/32 (bom, no bom, little and big endian),
-		/// and local default codepage, and potentially other codepages.
+		///     Function to detect the encoding for UTF-7, UTF-8/16/32 (bom, no bom, little and big endian),
+		///     and local default codepage, and potentially other codepages.
 		/// </summary>
 		/// <param name="textBytes">The input text</param>
 		/// <param name="taster">Number of bytes to check of the file (to save processing).</param>
@@ -101,10 +101,7 @@ namespace SimaiSharp.Internal
 				break;
 			}
 
-			if (utf8)
-			{
-				return Encoding.UTF8;
-			}
+			if (utf8) return Encoding.UTF8;
 
 
 			// The next check is a heuristic attempt to detect UTF-16 without a BOM.
@@ -116,19 +113,13 @@ namespace SimaiSharp.Internal
 			for (var n = 0; n < taster; n += 2)
 				if (textBytes[n] == 0)
 					count++;
-			if (((double)count) / taster > threshold)
-			{
-				return Encoding.BigEndianUnicode;
-			}
+			if ((double)count / taster > threshold) return Encoding.BigEndianUnicode;
 
 			count = 0;
 			for (var n = 1; n < taster; n += 2)
 				if (textBytes[n] == 0)
 					count++;
-			if (((double)count) / taster > threshold)
-			{
-				return Encoding.Unicode;
-			} // (little-endian)
+			if ((double)count / taster > threshold) return Encoding.Unicode; // (little-endian)
 
 
 			// Finally, a long shot - let's see if we can find "charset=xyz" or
@@ -141,7 +132,7 @@ namespace SimaiSharp.Internal
 				     (textBytes[n + 3] != 'r' && textBytes[n + 3] != 'R') ||
 				     (textBytes[n + 4] != 's' && textBytes[n + 4] != 'S') ||
 				     (textBytes[n + 5] != 'e' && textBytes[n + 5] != 'E') ||
-				     (textBytes[n + 6] != 't' && textBytes[n + 6] != 'T') || (textBytes[n + 7] != '=')) &&
+				     (textBytes[n + 6] != 't' && textBytes[n + 6] != 'T') || textBytes[n + 7] != '=') &&
 				    ((textBytes[n + 0] != 'e' && textBytes[n + 0] != 'E') ||
 				     (textBytes[n + 1] != 'n' && textBytes[n + 1] != 'N') ||
 				     (textBytes[n + 2] != 'c' && textBytes[n + 2] != 'C') ||
@@ -150,7 +141,7 @@ namespace SimaiSharp.Internal
 				     (textBytes[n + 5] != 'i' && textBytes[n + 5] != 'I') ||
 				     (textBytes[n + 6] != 'n' && textBytes[n + 6] != 'N') ||
 				     (textBytes[n + 7] != 'g' && textBytes[n + 7] != 'G') ||
-				     (textBytes[n + 8] != '='))) continue;
+				     textBytes[n + 8] != '=')) continue;
 
 				if (textBytes[n + 0] == 'c' || textBytes[n + 0] == 'C') n += 8;
 				else n                                                    += 9;
@@ -160,9 +151,7 @@ namespace SimaiSharp.Internal
 				                      (textBytes[n] >= '0' && textBytes[n] <= '9') ||
 				                      (textBytes[n] >= 'a' && textBytes[n] <= 'z') ||
 				                      (textBytes[n] >= 'A' && textBytes[n] <= 'Z')))
-				{
 					n++;
-				}
 
 				var nb = new byte[n - oldN];
 				Array.Copy(textBytes, oldN, nb, 0, n - oldN);
