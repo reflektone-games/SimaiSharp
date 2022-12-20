@@ -26,7 +26,7 @@ var chartKey = @"inote_5";
 var rawChart = simaiFile.GetValue(chartKey);
 
 // Deserialize the chart
-var chart = SimaiConvert.Deserialize(text);
+var chart = SimaiConvert.Deserialize(rawChart);
 ```
 
 # Contribute
