@@ -212,7 +212,7 @@ namespace SimaiSharp.Internal.LexicalAnalysis
 
 		private static bool IsButtonLocation(char value)
 		{
-			return value is >= '1' and <= '8';
+			return value is >= '0' and <= '8';
 		}
 
 		/// <summary>
