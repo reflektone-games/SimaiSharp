@@ -54,6 +54,13 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 					{
 						currentNoteCollection ??= new NoteCollection(_currentTime);
 
+						if (token.lexeme.Span[0] == '0' && 
+						    currentNoteCollection.eachStyle is not EachStyle.ForceBroken)
+						{
+							currentNoteCollection.eachStyle = EachStyle.ForceEach;
+							break;
+						}
+
 						var note = NoteReader.Process(this, token);
 						currentNoteCollection.AddNote(ref note);
 						manuallyMoved = true;
