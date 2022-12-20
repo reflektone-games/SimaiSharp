@@ -13,7 +13,20 @@ you will need to add a reference to the SimaiSharp library in your solution.
 Then, use the following method to deserialize a chart:
 
 ```csharp
-SimaiConvert.Deserialize(string value);
+// Specify the chart file
+var filePath = @"Z:\path\to\your\chart.txt";
+
+// Read it into your program
+var simaiFile = new SimaiFile(filePath);
+
+// Specify a key to read, without the "&"
+var chartKey = @"inote_5";
+
+// Get the corresponding value as a string
+var rawChart = simaiFile.GetValue(chartKey);
+
+// Deserialize the chart
+var chart = SimaiConvert.Deserialize(text);
 ```
 
 # Contribute
