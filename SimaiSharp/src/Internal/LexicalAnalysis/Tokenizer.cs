@@ -97,8 +97,16 @@ namespace SimaiSharp.Internal.LexicalAnalysis
 				case '*':
 					return CompileToken(TokenType.SlideJoiner);
 
-				case '/' or '\\':
-					return CompileToken(TokenType.EachDivider);
+				case '/':
+				{
+					if (Peek() != '/') 
+						return CompileToken(TokenType.EachDivider);
+					
+					while (Peek() != '\n') 
+						Advance();
+
+					return null;
+				}
 
 				case var _ when SeparatorChars.Contains(c):
 					// Ignore whitespace.
