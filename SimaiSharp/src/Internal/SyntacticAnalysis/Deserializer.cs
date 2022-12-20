@@ -54,10 +54,10 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 					{
 						currentNoteCollection ??= new NoteCollection(_currentTime);
 
-						if (token.lexeme.Span[0] == '0' && 
-						    currentNoteCollection.eachStyle is not EachStyle.ForceBroken)
+						if (token.lexeme.Span[0] == '0')
 						{
-							currentNoteCollection.eachStyle = EachStyle.ForceEach;
+							if (currentNoteCollection.eachStyle is not EachStyle.ForceBroken)
+								currentNoteCollection.eachStyle = EachStyle.ForceEach;
 							break;
 						}
 
