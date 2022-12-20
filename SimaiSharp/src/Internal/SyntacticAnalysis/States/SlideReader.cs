@@ -129,14 +129,12 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 				if (Deserializer.TryReadLocation(in current,
 				                                 out var location))
 					segment.vertices.Add(location);
-			} while (parent.enumerator.Current.type != TokenType.Location);
+			} while (parent.enumerator.Current.type == TokenType.Location);
 		}
 
+		// REFERENCE: https://w.atwiki.jp/simai/pages/25.html#id_3afb985d
 		private static void ReadDuration(in Token token, in TimingChange timing, ref SlidePath path)
 		{
-			// TODO: Implement slide duration readout
-			// REFERENCE: https://w.atwiki.jp/simai/pages/25.html#id_3afb985d
-
 			var startOfDurationDeclaration = 0;
 			var overrideTiming             = timing;
 

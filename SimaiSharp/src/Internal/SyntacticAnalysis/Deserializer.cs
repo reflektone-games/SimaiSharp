@@ -8,18 +8,18 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 {
 	internal class Deserializer : IDisposable
 	{
-		private readonly  MaiChart           _chart = new();
 		internal readonly IEnumerator<Token> enumerator;
-		internal          NoteCollection?    currentNoteCollection;
-		internal          float              currentTime;
+		private readonly  MaiChart           _chart = new();
 		internal          TimingChange       currentTiming;
+		private           NoteCollection?    _currentNoteCollection;
+		private           float              _currentTime;
 
 		public Deserializer(IEnumerable<Token> sequence)
 		{
-			enumerator            = sequence.GetEnumerator();
-			currentTiming         = new TimingChange();
-			currentNoteCollection = null;
-			currentTime           = 0;
+			enumerator             = sequence.GetEnumerator();
+			currentTiming          = new TimingChange();
+			_currentNoteCollection = null;
+			_currentTime           = 0;
 		}
 
 		public void Dispose()
@@ -55,19 +55,19 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 						var note = NoteReader.Process(this, token);
 						manuallyMoved = true;
 
-						currentNoteCollection ??= new NoteCollection(currentTime);
-						currentNoteCollection.AddNote(ref note);
+						_currentNoteCollection ??= new NoteCollection(_currentTime);
+						_currentNoteCollection.AddNote(ref note);
 						break;
 					}
 					case TokenType.TimeStep:
 					{
-						if (currentNoteCollection != null)
+						if (_currentNoteCollection != null)
 						{
-							_chart.AddCollection(currentNoteCollection);
-							currentNoteCollection = null;
+							_chart.AddCollection(_currentNoteCollection);
+							_currentNoteCollection = null;
 						}
 
-						currentTime += currentTiming.SecondsPerBeat;
+						_currentTime += currentTiming.SecondsPerBeat;
 					}
 						break;
 					case TokenType.EachDivider:
@@ -82,7 +82,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 					case TokenType.SlideJoiner:
 						throw ErrorHandler.DeserializationError(token, "Slide joiners should be attached to slides.");
 					case TokenType.EndOfFile:
-						_chart.finishTiming = currentTime;
+						_chart.finishTiming = _currentTime;
 						break;
 					default:
 						throw ErrorHandler.DeserializationError(token, "Unexpected token.");
