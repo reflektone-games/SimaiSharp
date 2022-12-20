@@ -9,7 +9,6 @@
 
     <ItemGroup>
       <Folder Include="docs" />
-      <Folder Include="tests" />
     </ItemGroup>
 
 </Project>
