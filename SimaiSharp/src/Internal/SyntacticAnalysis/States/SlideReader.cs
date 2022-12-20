@@ -66,9 +66,10 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 		{
 			var segment = new SlideSegment(new List<Location>(1));
 			var length  = identityToken.lexeme.Length;
-			segment.slideType = IdentifySlideType(currentNote, in identityToken, in segment, in length);
 			AssignVertices(parent, identityToken, ref segment);
+			segment.slideType = IdentifySlideType(currentNote, in identityToken, in segment, in length);
 
+			path.segments ??= new List<SlideSegment>();
 			path.segments.Add(segment);
 		}
 

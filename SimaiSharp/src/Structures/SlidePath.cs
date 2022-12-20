@@ -6,8 +6,8 @@ namespace SimaiSharp.Structures
 	[Serializable]
 	public struct SlidePath
 	{
-		public Location           startLocation;
-		public List<SlideSegment> segments;
+		public Location            startLocation;
+		public List<SlideSegment>? segments;
 
 		/// <summary>
 		/// The intro delay of a slide before it starts moving.
