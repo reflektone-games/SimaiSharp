@@ -14,10 +14,5 @@ namespace SimaiSharp.Internal.LexicalAnalysis
 			this.lexeme = lexeme;
 			this.line   = line;
 		}
-
-		public override string ToString()
-		{
-			return $"{type} {lexeme}";
-		}
 	}
 }

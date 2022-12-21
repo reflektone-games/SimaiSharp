@@ -17,7 +17,7 @@ namespace SimaiSharp.Internal.LexicalAnalysis
 		                                                       {
 			                                                       '`',
 			                                                       'f', 'b', 'x', 'h',
-			                                                       '!', '?', 
+			                                                       '!', '?',
 			                                                       '@', '$'
 		                                                       };
 
@@ -118,7 +118,7 @@ namespace SimaiSharp.Internal.LexicalAnalysis
 				{
 					if (Peek() != '|')
 						throw ErrorHandler.TokenizationError(_line, _item, Peek().ToString(),
-						                                     "Unexpected character.");
+						                                     "Unexpected character");
 
 					while (Peek() != '\n')
 						Advance();
@@ -127,7 +127,7 @@ namespace SimaiSharp.Internal.LexicalAnalysis
 				}
 
 				default:
-					throw ErrorHandler.TokenizationError(_line, _item, c.ToString(), "Unexpected character.");
+					throw ErrorHandler.TokenizationError(_line, _item, c.ToString(), "Unexpected character");
 			}
 		}
 
@@ -167,7 +167,7 @@ namespace SimaiSharp.Internal.LexicalAnalysis
 				return false;
 
 			throw ErrorHandler.TokenizationError(_line, _item, secondLocationChar.ToString(),
-			                                     "Invalid touch note expression.");
+			                                     "Invalid touch note expression");
 		}
 
 		private bool IsReadingSlideDeclaration(out int length)
@@ -191,8 +191,9 @@ namespace SimaiSharp.Internal.LexicalAnalysis
 			{
 				if (IsAtEnd)
 					throw ErrorHandler.TokenizationError(_line, _item,
-					                                     _sequence.Span[_start.._current].ToString(),
-					                                     "Unterminated tempo.");
+					                                     _sequence.Span[(_start - 1)..(_start)].ToString(),
+					                                     "Unterminated section. " +
+					                                     $"You probably want to add a {terminator} here");
 
 				Advance();
 			}

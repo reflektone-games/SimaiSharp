@@ -12,7 +12,7 @@ namespace SimaiSharp.Internal
 
 		public static Exception DeserializationError(in Token token, string message)
 		{
-			return new SimaiException($"{token} - {message}");
+			return new SimaiException(token, message);
 		}
 	}
 
@@ -20,12 +20,12 @@ namespace SimaiSharp.Internal
 	internal class SimaiException : Exception
 	{
 		public SimaiException(int line, int character, string location, string message)
-			: base($"Error: {message} at {location} ({line}, {character})")
+			: base($"{message}: {location} (on line {line}, char {character})")
 		{
 		}
 
-		public SimaiException(string message)
-			: base($"Error: {message}")
+		public SimaiException(Token token, string message)
+			: base($"{message}. {token.type} {token.lexeme} (on line {token.line})")
 		{
 		}
 	}
