@@ -17,6 +17,7 @@ namespace SimaiSharp.Structures
 
 		public float? length;
 
+		public SlideMorph      slideMorph;
 		public List<SlidePath> slidePaths;
 
 		public Note(NoteCollection parentCollection)
@@ -28,6 +29,7 @@ namespace SimaiSharp.Structures
 			appearance            = NoteAppearance.Default;
 			type                  = NoteType.Tap;
 			length                = null;
+			slideMorph            = SlideMorph.Default;
 		}
 
 		public bool IsEx => (styles & NoteStyle.Ex) != 0;

@@ -4,6 +4,6 @@ namespace SimaiSharp.Structures
 	{
 		Default,
 		FadeIn,
-		Hidden
+		SuddenIn
 	}
 }

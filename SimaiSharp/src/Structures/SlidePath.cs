@@ -15,8 +15,7 @@ namespace SimaiSharp.Structures
 		public float delay;
 
 		public float duration;
-
-		public SlideMorph slideMorph;
+		
 		public NoteType   type;
 
 		public SlidePath(List<SlideSegment>? segments = null)
@@ -25,7 +24,6 @@ namespace SimaiSharp.Structures
 			startLocation = default;
 			delay         = 0;
 			duration      = 0;
-			slideMorph    = SlideMorph.Default;
 			type          = NoteType.Slide;
 		}
 	}
