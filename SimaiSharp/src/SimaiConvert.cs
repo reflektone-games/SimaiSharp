@@ -1,6 +1,4 @@
-﻿using System;
-using SimaiSharp.Internal;
-using SimaiSharp.Internal.LexicalAnalysis;
+﻿using SimaiSharp.Internal.LexicalAnalysis;
 using SimaiSharp.Internal.SyntacticAnalysis;
 using SimaiSharp.Structures;
 

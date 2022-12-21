@@ -10,7 +10,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 		/// </summary>
 		public float SecondsPerBar => tempo == 0 ? 0 : 60f / tempo;
 
-		public float SecondsPerBeat => SecondsPerBar / (subdivisions / 4);
+		public float SecondsPerBeat => SecondsPerBar / ((subdivisions == 0 ? 4 : subdivisions) / 4);
 
 		public void ExplicitOverride(float value)
 		{

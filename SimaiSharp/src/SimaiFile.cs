@@ -39,12 +39,12 @@ namespace SimaiSharp
 
 				if (line == null)
 					break;
-				
+
 				if (line.StartsWith('&'))
 				{
 					if (currentKey != string.Empty)
 					{
-						yield return new KeyValuePair<string, string>(currentKey, currentValue.ToString());
+						yield return new KeyValuePair<string, string>(currentKey, currentValue.ToString().Trim());
 						currentValue.Clear();
 					}
 
@@ -59,7 +59,7 @@ namespace SimaiSharp
 			}
 
 			// Add the last entry
-			yield return new KeyValuePair<string, string>(currentKey, currentValue.ToString());
+			yield return new KeyValuePair<string, string>(currentKey, currentValue.ToString().Trim());
 		}
 
 		public string GetValue(string key)

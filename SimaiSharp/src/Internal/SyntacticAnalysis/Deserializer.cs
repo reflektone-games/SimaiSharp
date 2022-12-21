@@ -13,6 +13,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 		internal          TimingChange       currentTiming;
 		internal          NoteCollection?    currentNoteCollection;
 		private           float              _currentTime;
+		internal          bool               endOfFile;
 
 		public Deserializer(IEnumerable<Token> sequence)
 		{
@@ -20,6 +21,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 			currentTiming         = new TimingChange();
 			currentNoteCollection = null;
 			_currentTime          = 0;
+			endOfFile             = false;
 		}
 
 		public void Dispose()
@@ -32,8 +34,8 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 			// Some readers (e.g. NoteReader) moves the enumerator automatically.
 			// We can skip moving the pointer if that's satisfied.
 			var manuallyMoved = false;
-
-			while (manuallyMoved || enumerator.MoveNext())
+			
+			while (!endOfFile && (manuallyMoved || MoveNext()))
 			{
 				var token = enumerator.Current;
 				manuallyMoved = false;
@@ -91,11 +93,18 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 					case TokenType.EndOfFile:
 						_chart.finishTiming = _currentTime;
 						break;
+					case TokenType.None:
+						break;
 					default:
 						throw ErrorHandler.DeserializationError(token, "Unexpected token.");
 				}
 			}
 
+			if (currentNoteCollection == null)
+				return _chart;
+			
+			_chart.AddCollection(currentNoteCollection);
+			currentNoteCollection = null;
 			return _chart;
 		}
 
@@ -147,6 +156,11 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 			// Convert from 1-indexed to 0-indexed
 			value.index = indexInGroup - 1;
 			return true;
+		}
+
+		public bool MoveNext()
+		{
+			return !(endOfFile = !enumerator.MoveNext());
 		}
 	}
 }

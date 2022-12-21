@@ -18,7 +18,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 			// We can skip moving the pointer if that's satisfied.
 			var manuallyMoved = true;
 
-			while (manuallyMoved || parent.enumerator.MoveNext())
+			while (!parent.endOfFile && (manuallyMoved || parent.MoveNext()))
 			{
 				var token = parent.enumerator.Current;
 				manuallyMoved = false;

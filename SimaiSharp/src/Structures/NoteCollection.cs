@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace SimaiSharp.Structures
 {
 	[Serializable]
-	public sealed class NoteCollection : HashSet<Note>
+	public sealed class NoteCollection : List<Note>
 	{
 		public EachStyle eachStyle;
 		public float     time;

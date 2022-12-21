@@ -4,6 +4,7 @@ namespace SimaiSharp.Internal.LexicalAnalysis
 {
 	internal enum TokenType
 	{
+		None,
 		Tempo,
 		Subdivision,
 
