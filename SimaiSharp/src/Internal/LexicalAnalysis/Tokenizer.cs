@@ -98,15 +98,7 @@ namespace SimaiSharp.Internal.LexicalAnalysis
 					return CompileToken(TokenType.SlideJoiner);
 
 				case '/':
-				{
-					if (Peek() != '/') 
-						return CompileToken(TokenType.EachDivider);
-					
-					while (Peek() != '\n') 
-						Advance();
-
-					return null;
-				}
+					return CompileToken(TokenType.EachDivider);
 
 				case var _ when SeparatorChars.Contains(c):
 					// Ignore whitespace.
@@ -119,6 +111,18 @@ namespace SimaiSharp.Internal.LexicalAnalysis
 
 				case 'E':
 					return CompileToken(TokenType.EndOfFile);
+
+				case '|':
+				{
+					if (Peek() != '|')
+						throw ErrorHandler.TokenizationError(_line, _item, Peek().ToString(),
+						                                     "Unexpected character.");
+
+					while (Peek() != '\n')
+						Advance();
+
+					return null;
+				}
 
 				default:
 					throw ErrorHandler.TokenizationError(_line, _item, c.ToString(), "Unexpected character.");
