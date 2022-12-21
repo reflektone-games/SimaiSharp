@@ -6,8 +6,7 @@ namespace SimaiSharp.Structures
 	public enum NoteStyle
 	{
 		None      = 0,
-		Star      = 1 << 0,
-		Ex        = 1 << 1,
-		Fireworks = 1 << 2,
+		Ex        = 1 << 0,
+		Fireworks = 1 << 1,
 	}
 }

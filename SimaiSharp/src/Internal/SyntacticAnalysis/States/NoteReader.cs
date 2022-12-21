@@ -12,7 +12,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 			if (!Deserializer.TryReadLocation(in identityToken, out var noteLocation))
 				throw ErrorHandler.DeserializationError(identityToken, "Invalid location declaration.");
 
-			var currentNote = new Note
+			var currentNote = new Note(parent.currentNoteCollection!)
 			                  {
 				                  location = noteLocation
 			                  };
@@ -47,7 +47,6 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 						var slide = SlideReader.Process(parent, in currentNote, in token);
 						manuallyMoved = true;
 
-						currentNote.slidePaths ??= new List<SlidePath>();
 						currentNote.slidePaths.Add(slide);
 						break;
 					}
@@ -94,6 +93,14 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 				case '`':
 					if (parent.currentNoteCollection != null)
 						parent.currentNoteCollection.eachStyle = EachStyle.ForceBroken;
+					return;
+				case '@':
+					note.appearance = NoteAppearance.ForceNormal;
+					return;
+				case '$':
+					note.appearance = note.appearance is NoteAppearance.ForceStar
+						                  ? NoteAppearance.ForceStarSpinning
+						                  : NoteAppearance.ForceStar;
 					return;
 			}
 		}

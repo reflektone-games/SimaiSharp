@@ -7,15 +7,17 @@ namespace SimaiSharp.Structures
 	[Serializable]
 	public struct Note
 	{
-		[NonSerialized] public NoteCollection parentCollection;
+		[NonSerialized] 
+		public NoteCollection parentCollection;
 
 		public Location  location;
 		public NoteStyle styles;
+		public NoteAppearance  appearance;
 		public NoteType  type;
 
 		public float? length;
 
-		public List<SlidePath>? slidePaths;
+		public List<SlidePath> slidePaths;
 
 		public Note(NoteCollection parentCollection)
 		{
@@ -23,6 +25,7 @@ namespace SimaiSharp.Structures
 			slidePaths            = new();
 			location              = default;
 			styles                = NoteStyle.None;
+			appearance            = NoteAppearance.Default;
 			type                  = NoteType.Tap;
 			length                = null;
 		}
