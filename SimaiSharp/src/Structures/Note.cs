@@ -33,6 +33,8 @@ namespace SimaiSharp.Structures
 		}
 
 		public bool IsEx => (styles & NoteStyle.Ex) != 0;
+		public bool IsStar =>  appearance >= NoteAppearance.ForceStar ||
+		                       slidePaths.Count > 0 && appearance is not NoteAppearance.ForceNormal;
 
 		public float GetVisibleDuration()
 		{
