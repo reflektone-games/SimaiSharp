@@ -75,6 +75,10 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 		{
 			switch (token.lexeme.Span[0])
 			{
+				case '`':
+					if (parent.currentNoteCollection != null)
+						parent.currentNoteCollection.eachStyle = EachStyle.ForceBroken;
+					return;
 				case 'f':
 					note.styles |= NoteStyle.Fireworks;
 					return;
@@ -96,10 +100,6 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 				case '!':
 					note.type       = NoteType.ForceInvalidate;
 					note.slideMorph = SlideMorph.SuddenIn;
-					return;
-				case '`':
-					if (parent.currentNoteCollection != null)
-						parent.currentNoteCollection.eachStyle = EachStyle.ForceBroken;
 					return;
 				case '@':
 					note.appearance = NoteAppearance.ForceNormal;
