@@ -1,4 +1,4 @@
-![SimaiSharp Banner](./banner.png)
+![SimaiSharp Banner](./banner.jpg)
 
 # SimaiSharp
 
