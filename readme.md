@@ -1,3 +1,5 @@
+![SimaiSharp Banner](./banner.png)
+
 # SimaiSharp
 
 SimaiSharp is an interpreter and serializer for [simai](https://w.atwiki.jp/simai/), 
