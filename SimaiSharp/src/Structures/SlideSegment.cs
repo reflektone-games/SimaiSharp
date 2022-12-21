@@ -7,7 +7,8 @@ namespace SimaiSharp.Structures
 		/// <summary>
 		/// Describes the target buttons 
 		/// </summary>
-		public readonly List<Location> vertices;
+		// ReSharper disable once FieldCanBeMadeReadOnly.Global
+		public List<Location> vertices;
 
 		public SlideType slideType;
 
