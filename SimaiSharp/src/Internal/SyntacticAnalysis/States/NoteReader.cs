@@ -63,6 +63,8 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 					case TokenType.Location:
 						// note terminates here
 						return currentNote;
+					case TokenType.None:
+						break;
 					default:
 						throw new ArgumentOutOfRangeException();
 				}
@@ -114,6 +116,9 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 
 		private static void ReadDuration(in Token token, in TimingChange timing, ref Note note)
 		{
+			if (note.type != NoteType.Break)
+				note.type = NoteType.Hold;
+			
 			if (token.lexeme.Span[0] == '#')
 			{
 				if (!float.TryParse(token.lexeme.Span[1..], out var explicitValue))
