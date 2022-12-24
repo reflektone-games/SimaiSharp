@@ -11,7 +11,16 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 		                                in Note      currentNote,
 		                                in Token     identityToken)
 		{
-			var path = new SlidePath();
+			var overrideTiming = new TimingChange
+			                     {
+				                     tempo = parent.currentTiming.tempo
+			                     };
+
+			var path = new SlidePath
+			           {
+				           delay = overrideTiming.SecondsPerBeat
+			           };
+
 			ReadSegment(parent, currentNote, identityToken, ref path);
 
 			// Some readers (e.g. NoteReader) moves the enumerator automatically.
@@ -48,12 +57,18 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 						break;
 					}
 					case TokenType.SlideJoiner:
+					{
+						parent.MoveNext();
+						return path;
+					}
 					case TokenType.TimeStep:
 					case TokenType.EachDivider:
 					case TokenType.EndOfFile:
 					case TokenType.Location:
 						// slide terminates here
 						return path;
+					case TokenType.None:
+						break;
 					default:
 						throw new ArgumentOutOfRangeException();
 				}
@@ -91,30 +106,30 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 		                                           in int          length)
 		{
 			return identityToken.lexeme.Span[0] switch
-			       {
-				       '-' => SlideType.StraightLine,
-				       '>' => Deserializer.DetermineRingType(currentNote.location,
-				                                             segment.vertices[0],
-				                                             1),
-				       '<' => Deserializer.DetermineRingType(currentNote.location,
-				                                             segment.vertices[0],
-				                                             -1),
-				       '^' => Deserializer.DetermineRingType(currentNote.location,
-				                                             segment.vertices[0]),
-				       'q' when length == 2 && identityToken.lexeme.Span[1] == 'q' =>
-					       SlideType.EdgeCurveCw,
-				       'q' => SlideType.CurveCw,
-				       'p' when length == 2 && identityToken.lexeme.Span[1] == 'p' =>
-					       SlideType.EdgeCurveCcw,
-				       'p' => SlideType.CurveCcw,
-				       'v' => SlideType.Fold,
-				       'V' => SlideType.EdgeFold,
-				       's' => SlideType.ZigZagS,
-				       'z' => SlideType.ZigZagZ,
-				       'w' => SlideType.Fan,
-				       _ => throw ErrorHandler.DeserializationError(in identityToken,
-				                                                    "Slide type not recognized.")
-			       };
+			{
+				'-' => SlideType.StraightLine,
+				'>' => Deserializer.DetermineRingType(currentNote.location,
+				                                      segment.vertices[0],
+				                                      1),
+				'<' => Deserializer.DetermineRingType(currentNote.location,
+				                                      segment.vertices[0],
+				                                      -1),
+				'^' => Deserializer.DetermineRingType(currentNote.location,
+				                                      segment.vertices[0]),
+				'q' when length == 2 && identityToken.lexeme.Span[1] == 'q' =>
+					SlideType.EdgeCurveCw,
+				'q' => SlideType.CurveCw,
+				'p' when length == 2 && identityToken.lexeme.Span[1] == 'p' =>
+					SlideType.EdgeCurveCcw,
+				'p' => SlideType.CurveCcw,
+				'v' => SlideType.Fold,
+				'V' => SlideType.EdgeFold,
+				's' => SlideType.ZigZagS,
+				'z' => SlideType.ZigZagZ,
+				'w' => SlideType.Fan,
+				_ => throw ErrorHandler.DeserializationError(in identityToken,
+				                                             "Slide type not recognized.")
+			};
 		}
 
 		private static void AssignVertices(Deserializer parent, in Token identityToken, ref SlideSegment segment)
@@ -163,7 +178,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 						throw ErrorHandler.DeserializationError(token, "Invalid explicit slide delay syntax.");
 
 					overrideTiming.tempo = tempoValue;
-					path.delay           = overrideTiming.SecondsPerBar;
+					path.delay           = overrideTiming.SecondsPerBeat;
 				}
 			}
 
