@@ -29,7 +29,7 @@ namespace SimaiSharp.Structures
 			appearance            = NoteAppearance.Default;
 			type                  = NoteType.Tap;
 			length                = null;
-			slideMorph            = SlideMorph.Default;
+			slideMorph            = SlideMorph.FadeIn;
 		}
 
 		public bool IsEx => (styles & NoteStyle.Ex) != 0;
