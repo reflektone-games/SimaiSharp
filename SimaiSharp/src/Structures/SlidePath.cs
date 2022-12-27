@@ -6,8 +6,8 @@ namespace SimaiSharp.Structures
 	[Serializable]
 	public struct SlidePath
 	{
-		public Location            startLocation;
-		public List<SlideSegment>? segments;
+		public Location           startLocation;
+		public List<SlideSegment> segments;
 
 		/// <summary>
 		/// The intro delay of a slide before it starts moving.
@@ -15,12 +15,12 @@ namespace SimaiSharp.Structures
 		public float delay;
 
 		public float duration;
-		
-		public NoteType   type;
 
-		public SlidePath(List<SlideSegment>? segments = null)
+		public NoteType type;
+
+		public SlidePath(List<SlideSegment> segments)
 		{
-			this.segments = segments ?? new List<SlideSegment>();
+			this.segments = segments;
 			startLocation = default;
 			delay         = 0;
 			duration      = 0;

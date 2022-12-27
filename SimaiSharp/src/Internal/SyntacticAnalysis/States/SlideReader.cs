@@ -16,12 +16,12 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 				                     tempo = parent.currentTiming.tempo
 			                     };
 
-			var path = new SlidePath
+			var path = new SlidePath(new List<SlideSegment>())
 			           {
 				           delay = overrideTiming.SecondsPerBeat
 			           };
 
-			ReadSegment(parent, currentNote, identityToken, ref path);
+			ReadSegment(parent, identityToken, currentNote.location, ref path);
 
 			// Some readers (e.g. NoteReader) moves the enumerator automatically.
 			// We can skip moving the pointer if that's satisfied.
@@ -47,7 +47,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 					}
 					case TokenType.Slide:
 					{
-						ReadSegment(parent, currentNote, token, ref path);
+						ReadSegment(parent, token, path.segments[^1].vertices[^1], ref path);
 						manuallyMoved = true;
 						break;
 					}
@@ -77,14 +77,16 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 			return path;
 		}
 
-		private static void ReadSegment(Deserializer parent, Note currentNote, Token identityToken, ref SlidePath path)
+		private static void ReadSegment(Deserializer  parent, 
+		                                Token         identityToken, 
+		                                Location      startingLocation,
+		                                ref SlidePath path)
 		{
 			var segment = new SlideSegment(new List<Location>(1));
 			var length  = identityToken.lexeme.Length;
 			AssignVertices(parent, identityToken, ref segment);
-			segment.slideType = IdentifySlideType(currentNote, in identityToken, in segment, in length);
+			segment.slideType = IdentifySlideType(in identityToken, startingLocation, in segment, in length);
 
-			path.segments ??= new List<SlideSegment>();
 			path.segments.Add(segment);
 		}
 
@@ -100,21 +102,21 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 			}
 		}
 
-		private static SlideType IdentifySlideType(Note            currentNote,
-		                                           in Token        identityToken,
+		private static SlideType IdentifySlideType(in Token        identityToken,
+		                                           in Location     startingLocation,
 		                                           in SlideSegment segment,
 		                                           in int          length)
 		{
 			return identityToken.lexeme.Span[0] switch
 			{
 				'-' => SlideType.StraightLine,
-				'>' => Deserializer.DetermineRingType(currentNote.location,
+				'>' => Deserializer.DetermineRingType(startingLocation,
 				                                      segment.vertices[0],
 				                                      1),
-				'<' => Deserializer.DetermineRingType(currentNote.location,
+				'<' => Deserializer.DetermineRingType(startingLocation,
 				                                      segment.vertices[0],
 				                                      -1),
-				'^' => Deserializer.DetermineRingType(currentNote.location,
+				'^' => Deserializer.DetermineRingType(startingLocation,
 				                                      segment.vertices[0]),
 				'q' when length == 2 && identityToken.lexeme.Span[1] == 'q' =>
 					SlideType.EdgeCurveCw,
