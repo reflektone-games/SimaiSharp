@@ -180,7 +180,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 						throw ErrorHandler.DeserializationError(token, "Invalid explicit slide delay syntax.");
 
 					overrideTiming.tempo = tempoValue;
-					path.delay           = overrideTiming.SecondsPerBeat;
+					path.delay           = overrideTiming.SecondsPerBar;
 				}
 			}
 
