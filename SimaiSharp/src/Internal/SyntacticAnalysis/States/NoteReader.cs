@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using SimaiSharp.Internal.LexicalAnalysis;
 using SimaiSharp.Structures;
 
@@ -118,10 +119,13 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 		{
 			if (note.type != NoteType.Break)
 				note.type = NoteType.Hold;
-			
+
 			if (token.lexeme.Span[0] == '#')
 			{
-				if (!float.TryParse(token.lexeme.Span[1..], out var explicitValue))
+				if (!float.TryParse(token.lexeme.Span[1..], 
+				                    NumberStyles.Any,
+				                    CultureInfo.InvariantCulture, 
+				                    out var explicitValue))
 					throw ErrorHandler.DeserializationError(token, "Invalid explicit hold duration syntax.");
 
 				note.length = explicitValue;
@@ -129,10 +133,16 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 			}
 
 			var indexOfSeparator = token.lexeme.Span.IndexOf(':');
-			if (!float.TryParse(token.lexeme.Span[..indexOfSeparator], out var nominator))
+			if (!float.TryParse(token.lexeme.Span[..indexOfSeparator], 
+			                    NumberStyles.Any, 
+			                    CultureInfo.InvariantCulture, 
+			                    out var nominator))
 				throw ErrorHandler.DeserializationError(token, "Invalid hold duration nominator.");
 
-			if (!float.TryParse(token.lexeme.Span[(indexOfSeparator + 1)..], out var denominator))
+			if (!float.TryParse(token.lexeme.Span[(indexOfSeparator + 1)..], 
+			                    NumberStyles.Any, 
+			                    CultureInfo.InvariantCulture, 
+			                    out var denominator))
 				throw ErrorHandler.DeserializationError(token, "Invalid hold duration denominator.");
 
 			note.length = timing.SecondsPerBar / (nominator / 4) * denominator;

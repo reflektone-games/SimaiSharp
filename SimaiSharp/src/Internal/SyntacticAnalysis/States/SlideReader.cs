@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using SimaiSharp.Internal.LexicalAnalysis;
 using SimaiSharp.Structures;
 
@@ -77,8 +78,8 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 			return path;
 		}
 
-		private static void ReadSegment(Deserializer  parent, 
-		                                Token         identityToken, 
+		private static void ReadSegment(Deserializer  parent,
+		                                Token         identityToken,
 		                                Location      startingLocation,
 		                                ref SlidePath path)
 		{
@@ -169,14 +170,20 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 				var isExplicitStatement = firstHashIndex != lastHashIndex;
 				if (isExplicitStatement)
 				{
-					if (!float.TryParse(delayDeclaration, out var explicitValue))
+					if (!float.TryParse(delayDeclaration,
+					                    NumberStyles.Any,
+					                    CultureInfo.InvariantCulture,
+					                    out var explicitValue))
 						throw ErrorHandler.DeserializationError(token, "Invalid explicit slide delay syntax.");
 
 					path.delay = explicitValue;
 				}
 				else
 				{
-					if (!float.TryParse(delayDeclaration, out var tempoValue))
+					if (!float.TryParse(delayDeclaration,
+					                    NumberStyles.Any,
+					                    CultureInfo.InvariantCulture,
+					                    out var tempoValue))
 						throw ErrorHandler.DeserializationError(token, "Invalid explicit slide delay syntax.");
 
 					overrideTiming.tempo = tempoValue;
@@ -192,17 +199,25 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 			// By explicit statement: D (seconds)
 			if (indexOfSeparator == -1)
 			{
-				if (!float.TryParse(durationDeclaration, out var explicitValue))
+				if (!float.TryParse(durationDeclaration,
+				                    NumberStyles.Any,
+				                    CultureInfo.InvariantCulture,
+				                    out var explicitValue))
 					throw ErrorHandler.DeserializationError(token, "Invalid explicit slide duration syntax.");
 
 				path.duration = explicitValue;
 				return;
 			}
 
-			if (!float.TryParse(durationDeclaration[..indexOfSeparator], out var nominator))
+			if (!float.TryParse(durationDeclaration[..indexOfSeparator], NumberStyles.Any,
+			                    CultureInfo.InvariantCulture,
+			                    out var nominator))
 				throw ErrorHandler.DeserializationError(token, "Invalid slide duration nominator.");
 
-			if (!float.TryParse(durationDeclaration[(indexOfSeparator + 1)..], out var denominator))
+			if (!float.TryParse(durationDeclaration[(indexOfSeparator + 1)..],
+			                    NumberStyles.Any, 
+			                    CultureInfo.InvariantCulture, 
+			                    out var denominator))
 				throw ErrorHandler.DeserializationError(token, "Invalid slide duration denominator.");
 
 			path.duration = overrideTiming.SecondsPerBar / (nominator / 4) * denominator;
