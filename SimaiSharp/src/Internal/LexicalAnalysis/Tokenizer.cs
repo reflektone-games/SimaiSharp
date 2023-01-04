@@ -191,7 +191,7 @@ namespace SimaiSharp.Internal.LexicalAnalysis
 			{
 				if (IsAtEnd)
 					throw ErrorHandler.TokenizationError(_line, _item,
-					                                     _sequence.Span[(_start - 1)..(_start)].ToString(),
+					                                     _sequence.Span[(_start - 1).._start].ToString(),
 					                                     "Unterminated section. " +
 					                                     $"You probably want to add a {terminator} here");
 

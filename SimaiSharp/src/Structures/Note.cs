@@ -7,13 +7,12 @@ namespace SimaiSharp.Structures
 	[Serializable]
 	public struct Note
 	{
-		[NonSerialized] 
-		public NoteCollection parentCollection;
+		[NonSerialized] public NoteCollection parentCollection;
 
-		public Location  location;
-		public NoteStyle styles;
-		public NoteAppearance  appearance;
-		public NoteType  type;
+		public Location       location;
+		public NoteStyle      styles;
+		public NoteAppearance appearance;
+		public NoteType       type;
 
 		public float? length;
 
@@ -23,7 +22,7 @@ namespace SimaiSharp.Structures
 		public Note(NoteCollection parentCollection)
 		{
 			this.parentCollection = parentCollection;
-			slidePaths            = new();
+			slidePaths            = new List<SlidePath>();
 			location              = default;
 			styles                = NoteStyle.None;
 			appearance            = NoteAppearance.Default;
@@ -33,8 +32,9 @@ namespace SimaiSharp.Structures
 		}
 
 		public bool IsEx => (styles & NoteStyle.Ex) != 0;
-		public bool IsStar =>  appearance >= NoteAppearance.ForceStar ||
-		                       slidePaths.Count > 0 && appearance is not NoteAppearance.ForceNormal;
+
+		public bool IsStar => appearance >= NoteAppearance.ForceStar ||
+		                      (slidePaths.Count > 0 && appearance is not NoteAppearance.ForceNormal);
 
 		public float GetVisibleDuration()
 		{

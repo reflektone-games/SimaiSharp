@@ -215,8 +215,8 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 				throw ErrorHandler.DeserializationError(token, "Invalid slide duration nominator.");
 
 			if (!float.TryParse(durationDeclaration[(indexOfSeparator + 1)..],
-			                    NumberStyles.Any, 
-			                    CultureInfo.InvariantCulture, 
+			                    NumberStyles.Any,
+			                    CultureInfo.InvariantCulture,
 			                    out var denominator))
 				throw ErrorHandler.DeserializationError(token, "Invalid slide duration denominator.");
 

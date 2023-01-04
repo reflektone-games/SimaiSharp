@@ -10,7 +10,7 @@ namespace SimaiSharp.Structures
 		public List<SlideSegment> segments;
 
 		/// <summary>
-		/// The intro delay of a slide before it starts moving.
+		///     The intro delay of a slide before it starts moving.
 		/// </summary>
 		public float delay;
 

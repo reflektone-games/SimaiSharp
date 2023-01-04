@@ -10,8 +10,8 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 			if (token.lexeme.Span[0] == '#')
 			{
 				if (!float.TryParse(token.lexeme.Span[1..],
-				                    NumberStyles.Any, 
-				                    CultureInfo.InvariantCulture, 
+				                    NumberStyles.Any,
+				                    CultureInfo.InvariantCulture,
 				                    out var explicitTempo))
 					throw ErrorHandler.DeserializationError(token, "Explicit tempo includes non-numeric value.");
 
@@ -19,9 +19,9 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 				return;
 			}
 
-			if (!float.TryParse(token.lexeme.Span, 
-			                    NumberStyles.Any, 
-			                    CultureInfo.InvariantCulture, 
+			if (!float.TryParse(token.lexeme.Span,
+			                    NumberStyles.Any,
+			                    CultureInfo.InvariantCulture,
 			                    out var subdivision))
 				throw ErrorHandler.DeserializationError(token, "Subdivision includes non-numeric value.");
 

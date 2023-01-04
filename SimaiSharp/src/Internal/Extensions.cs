@@ -13,9 +13,9 @@ namespace SimaiSharp.Internal
 			const char paragraphSeparator = (char)0x2029;
 
 			return value.Replace("\r\n", string.Empty)
-			            .Replace("\n", string.Empty)
-			            .Replace("\r", string.Empty)
-			            .Replace(lineSeparator.ToString(), string.Empty)
+			            .Replace("\n",                          string.Empty)
+			            .Replace("\r",                          string.Empty)
+			            .Replace(lineSeparator.ToString(),      string.Empty)
 			            .Replace(paragraphSeparator.ToString(), string.Empty);
 		}
 
@@ -147,7 +147,7 @@ namespace SimaiSharp.Internal
 				else n                                                    += 9;
 				if (textBytes[n] == '"' || textBytes[n] == '\'') n++;
 				var oldN = n;
-				while (n < taster && (textBytes[n] == '_' || textBytes[n] == '-' ||
+				while (n < taster && (textBytes[n] == '_'                          || textBytes[n] == '-' ||
 				                      (textBytes[n] >= '0' && textBytes[n] <= '9') ||
 				                      (textBytes[n] >= 'a' && textBytes[n] <= 'z') ||
 				                      (textBytes[n] >= 'A' && textBytes[n] <= 'Z')))

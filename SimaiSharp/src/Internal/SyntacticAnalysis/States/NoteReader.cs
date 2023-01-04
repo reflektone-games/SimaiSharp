@@ -122,9 +122,9 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 
 			if (token.lexeme.Span[0] == '#')
 			{
-				if (!float.TryParse(token.lexeme.Span[1..], 
+				if (!float.TryParse(token.lexeme.Span[1..],
 				                    NumberStyles.Any,
-				                    CultureInfo.InvariantCulture, 
+				                    CultureInfo.InvariantCulture,
 				                    out var explicitValue))
 					throw ErrorHandler.DeserializationError(token, "Invalid explicit hold duration syntax.");
 
@@ -133,15 +133,15 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 			}
 
 			var indexOfSeparator = token.lexeme.Span.IndexOf(':');
-			if (!float.TryParse(token.lexeme.Span[..indexOfSeparator], 
-			                    NumberStyles.Any, 
-			                    CultureInfo.InvariantCulture, 
+			if (!float.TryParse(token.lexeme.Span[..indexOfSeparator],
+			                    NumberStyles.Any,
+			                    CultureInfo.InvariantCulture,
 			                    out var nominator))
 				throw ErrorHandler.DeserializationError(token, "Invalid hold duration nominator.");
 
-			if (!float.TryParse(token.lexeme.Span[(indexOfSeparator + 1)..], 
-			                    NumberStyles.Any, 
-			                    CultureInfo.InvariantCulture, 
+			if (!float.TryParse(token.lexeme.Span[(indexOfSeparator + 1)..],
+			                    NumberStyles.Any,
+			                    CultureInfo.InvariantCulture,
 			                    out var denominator))
 				throw ErrorHandler.DeserializationError(token, "Invalid hold duration denominator.");
 

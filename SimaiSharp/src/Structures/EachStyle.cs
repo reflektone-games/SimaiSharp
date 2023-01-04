@@ -4,6 +4,6 @@ namespace SimaiSharp.Structures
 	{
 		Default,
 		ForceBroken,
-		ForceEach,
+		ForceEach
 	}
 }

@@ -7,6 +7,6 @@ namespace SimaiSharp.Structures
 	{
 		None      = 0,
 		Ex        = 1 << 0,
-		Fireworks = 1 << 1,
+		Fireworks = 1 << 1
 	}
 }

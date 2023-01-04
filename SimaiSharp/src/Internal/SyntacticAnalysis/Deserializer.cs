@@ -8,11 +8,11 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 {
 	internal class Deserializer : IDisposable
 	{
-		internal readonly IEnumerator<Token> enumerator;
 		private readonly  MaiChart           _chart = new();
-		internal          TimingChange       currentTiming;
-		internal          NoteCollection?    currentNoteCollection;
+		internal readonly IEnumerator<Token> enumerator;
 		private           float              _currentTime;
+		internal          NoteCollection?    currentNoteCollection;
+		internal          TimingChange       currentTiming;
 		internal          bool               endOfFile;
 
 		public Deserializer(IEnumerable<Token> sequence)
@@ -34,7 +34,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 			// Some readers (e.g. NoteReader) moves the enumerator automatically.
 			// We can skip moving the pointer if that's satisfied.
 			var manuallyMoved = false;
-			
+
 			while (!endOfFile && (manuallyMoved || MoveNext()))
 			{
 				var token = enumerator.Current;
@@ -102,7 +102,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 
 			if (currentNoteCollection == null)
 				return _chart;
-			
+
 			_chart.AddCollection(currentNoteCollection);
 			currentNoteCollection = null;
 			return _chart;
