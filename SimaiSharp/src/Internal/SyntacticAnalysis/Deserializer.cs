@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using SimaiSharp.Internal.LexicalAnalysis;
 using SimaiSharp.Internal.SyntacticAnalysis.States;
 using SimaiSharp.Structures;
@@ -29,6 +30,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 			enumerator.Dispose();
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public MaiChart GetChart()
 		{
 			// Some readers (e.g. NoteReader) moves the enumerator automatically.

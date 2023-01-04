@@ -1,10 +1,12 @@
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using SimaiSharp.Internal.LexicalAnalysis;
 
 namespace SimaiSharp.Internal.SyntacticAnalysis.States
 {
 	internal static class SubdivisionReader
 	{
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static void Process(Deserializer parent, Token token)
 		{
 			if (token.lexeme.Span[0] == '#')

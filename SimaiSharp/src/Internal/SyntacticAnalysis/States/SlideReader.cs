@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using SimaiSharp.Internal.LexicalAnalysis;
 using SimaiSharp.Structures;
 
@@ -8,6 +9,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 {
 	internal static class SlideReader
 	{
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static SlidePath Process(Deserializer parent,
 		                                in Note      currentNote,
 		                                in Token     identityToken)
@@ -78,6 +80,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 			return path;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static void ReadSegment(Deserializer  parent,
 		                                Token         identityToken,
 		                                Location      startingLocation,
@@ -91,6 +94,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 			path.segments.Add(segment);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static void DecorateSlide(in Token token, ref SlidePath path)
 		{
 			switch (token.lexeme.Span[0])
@@ -103,6 +107,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static SlideType IdentifySlideType(in Token        identityToken,
 		                                           in Location     startingLocation,
 		                                           in SlideSegment segment,
@@ -135,6 +140,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 			};
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static void AssignVertices(Deserializer parent, in Token identityToken, ref SlideSegment segment)
 		{
 			do
@@ -151,6 +157,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 		}
 
 		// REFERENCE: https://w.atwiki.jp/simai/pages/25.html#id_3afb985d
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static void ReadDuration(in Token token, in TimingChange timing, ref SlidePath path)
 		{
 			var startOfDurationDeclaration = 0;

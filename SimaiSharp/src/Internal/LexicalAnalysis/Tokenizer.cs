@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace SimaiSharp.Internal.LexicalAnalysis
 {
@@ -57,6 +58,7 @@ namespace SimaiSharp.Internal.LexicalAnalysis
 
 		private bool IsAtEnd => _current >= _sequence.Length;
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public IEnumerable<Token> GetTokens()
 		{
 			while (!IsAtEnd)
@@ -69,6 +71,7 @@ namespace SimaiSharp.Internal.LexicalAnalysis
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private Token? ScanToken()
 		{
 			_item++;

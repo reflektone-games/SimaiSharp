@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using SimaiSharp.Internal.LexicalAnalysis;
 using SimaiSharp.Structures;
 
@@ -7,6 +8,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 {
 	internal static class NoteReader
 	{
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static Note Process(Deserializer parent, Token identityToken)
 		{
 			if (!Deserializer.TryReadLocation(in identityToken, out var noteLocation))
