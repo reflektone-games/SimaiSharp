@@ -41,7 +41,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 						                                        "Subdivision should be declared outside of note scope.");
 					case TokenType.Decorator:
 					{
-						DecorateNote(in parent, in token, ref currentNote);
+						DecorateNote(in token, ref currentNote);
 						break;
 					}
 					case TokenType.Slide:
@@ -76,14 +76,10 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 			return currentNote;
 		}
 
-		private static void DecorateNote(in Deserializer parent, in Token token, ref Note note)
+		private static void DecorateNote(in Token token, ref Note note)
 		{
 			switch (token.lexeme.Span[0])
 			{
-				case '`':
-					if (parent.currentNoteCollection != null)
-						parent.currentNoteCollection.eachStyle = EachStyle.ForceBroken;
-					return;
 				case 'f':
 					note.styles |= NoteStyle.Fireworks;
 					return;

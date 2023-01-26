@@ -82,6 +82,18 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 					}
 						break;
 					case TokenType.EachDivider:
+					{
+						switch (token.lexeme.Span[0])
+						{
+							case '/': 
+								break;
+							
+							case '`':
+								if (currentNoteCollection != null)
+									currentNoteCollection.eachStyle = EachStyle.ForceBroken;
+								break;
+						}
+					}
 						break;
 					case TokenType.Decorator:
 						throw ErrorHandler.DeserializationError(token, "Decorators should be attached to notes.");

@@ -14,9 +14,13 @@ namespace SimaiSharp.Internal.LexicalAnalysis
 		private const char LineSeparator      = (char)0x2028;
 		private const char ParagraphSeparator = (char)0x2029;
 
+		private static readonly HashSet<char> EachDividerChars = new()
+		                                                         {
+			                                                         '/', '`'
+		                                                         };
+
 		private static readonly HashSet<char> DecoratorChars = new()
 		                                                       {
-			                                                       '`',
 			                                                       'f', 'b', 'x', 'h',
 			                                                       '!', '?',
 			                                                       '@', '$'
@@ -102,7 +106,7 @@ namespace SimaiSharp.Internal.LexicalAnalysis
 				case '*':
 					return CompileToken(TokenType.SlideJoiner);
 
-				case '/':
+				case var _ when EachDividerChars.Contains(c):
 					return CompileToken(TokenType.EachDivider);
 
 				case var _ when SeparatorChars.Contains(c):
