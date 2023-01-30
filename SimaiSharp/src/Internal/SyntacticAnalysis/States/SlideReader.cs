@@ -212,7 +212,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 				                    out var explicitValue))
 					throw ErrorHandler.DeserializationError(token, "Invalid explicit slide duration syntax.");
 
-				path.duration = explicitValue;
+				path.duration += explicitValue;
 				return;
 			}
 
@@ -227,7 +227,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 			                    out var denominator))
 				throw ErrorHandler.DeserializationError(token, "Invalid slide duration denominator.");
 
-			path.duration = overrideTiming.SecondsPerBar / (nominator / 4) * denominator;
+			path.duration += overrideTiming.SecondsPerBar / (nominator / 4) * denominator;
 		}
 	}
 }
