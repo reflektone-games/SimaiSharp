@@ -81,14 +81,17 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 			switch (token.lexeme.Span[0])
 			{
 				case 'f':
-					note.styles |= NoteStyle.Fireworks;
+					note.styles |= NoteStyles.Fireworks;
 					return;
 				case 'b' when note.type is not NoteType.ForceInvalidate:
 					// always override note type
 					note.type = NoteType.Break;
 					return;
 				case 'x':
-					note.styles |= NoteStyle.Ex;
+					note.styles |= NoteStyles.Ex;
+					return;
+				case 'm':
+					note.styles |= NoteStyles.Mine;
 					return;
 				case 'h' when note.type is not NoteType.Break or NoteType.ForceInvalidate:
 					note.type   =   NoteType.Hold;

@@ -10,7 +10,7 @@ namespace SimaiSharp.Structures
 		[NonSerialized] public NoteCollection parentCollection;
 
 		public Location       location;
-		public NoteStyle      styles;
+		public NoteStyles      styles;
 		public NoteAppearance appearance;
 		public NoteType       type;
 
@@ -24,14 +24,14 @@ namespace SimaiSharp.Structures
 			this.parentCollection = parentCollection;
 			slidePaths            = new List<SlidePath>();
 			location              = default;
-			styles                = NoteStyle.None;
+			styles                = NoteStyles.None;
 			appearance            = NoteAppearance.Default;
 			type                  = NoteType.Tap;
 			length                = null;
 			slideMorph            = SlideMorph.FadeIn;
 		}
 
-		public bool IsEx => (styles & NoteStyle.Ex) != 0;
+		public bool IsEx => (styles & NoteStyles.Ex) != 0;
 
 		public bool IsStar => appearance >= NoteAppearance.ForceStar ||
 		                      (slidePaths.Count > 0 && appearance is not NoteAppearance.ForceNormal);

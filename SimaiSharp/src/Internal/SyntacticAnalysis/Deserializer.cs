@@ -7,7 +7,7 @@ using SimaiSharp.Structures;
 
 namespace SimaiSharp.Internal.SyntacticAnalysis
 {
-	internal class Deserializer : IDisposable
+	internal sealed class Deserializer : IDisposable
 	{
 		private readonly  MaiChart           _chart = new();
 		internal readonly IEnumerator<Token> enumerator;
@@ -150,31 +150,39 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 
 		internal static bool TryReadLocation(in Token token, out Location value)
 		{
-			value = new Location();
-
 			var isSensor = token.lexeme.Span[0] is >= 'A' and <= 'E';
 			var indexRange = isSensor
 				                 ? token.lexeme.Span[1..]
 				                 : token.lexeme.Span[..];
 
+			var group = NoteGroup.Tap;
+			
 			if (isSensor)
 			{
-				value.group = (NoteGroup)(token.lexeme.Span[0] - 'A' + 1);
+				group = (NoteGroup)(token.lexeme.Span[0] - 'A' + 1);
 
-				if (value.group == NoteGroup.CSensor)
+				if (group == NoteGroup.CSensor)
+				{
+					value = new Location(0, group);
 					return true;
+				}
 			}
 
-			if (!int.TryParse(indexRange, out var indexInGroup)) return false;
+			if (!int.TryParse(indexRange, out var indexInGroup))
+			{
+				value = new Location();
+				return false;
+			}
 
 			// Convert from 1-indexed to 0-indexed
-			value.index = indexInGroup - 1;
+			value = new Location(indexInGroup - 1, group);
 			return true;
 		}
 
 		public bool MoveNext()
 		{
-			return !(endOfFile = !enumerator.MoveNext());
+			endOfFile = !enumerator.MoveNext();
+			return !endOfFile;
 		}
 	}
 }

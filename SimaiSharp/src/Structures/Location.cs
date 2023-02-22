@@ -2,6 +2,7 @@
 
 namespace SimaiSharp.Structures
 {
+	// ReSharper disable once StructCanBeMadeReadOnly
 	public struct Location
 	{
 		/// <summary>
@@ -11,18 +12,40 @@ namespace SimaiSharp.Structures
 
 		public NoteGroup group;
 
+		public Location(int index, NoteGroup group)
+		{
+			this.index = index;
+			this.group = group;
+		}
+
+		public static bool operator ==(Location x, Location y)
+		{
+			return x.group == y.group && x.index == y.index;
+		}
+
+		public static bool operator !=(Location x, Location y)
+		{
+			return x.group != y.group || x.index != y.index;
+		}
+
+		public bool Equals(Location other)
+		{
+			return index == other.index && group == other.group;
+		}
+
+		public override bool Equals(object? obj)
+		{
+			return obj is Location other && Equals(other);
+		}
+
+		public override int GetHashCode()
+		{
+			return HashCode.Combine(index, (int)group);
+		}
+
 		public override string ToString()
 		{
-			return group switch
-			{
-				NoteGroup.Tap     => index.ToString(),
-				NoteGroup.ASensor => "A" + index,
-				NoteGroup.BSensor => "B" + index,
-				NoteGroup.CSensor => "C" + index,
-				NoteGroup.DSensor => "D" + index,
-				NoteGroup.ESensor => "E" + index,
-				_                 => throw new ArgumentOutOfRangeException()
-			};
+			return $"{nameof(index)}: {index}, {nameof(group)}: {group}";
 		}
 	}
 }
