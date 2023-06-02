@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using SimaiSharp.Internal.Errors;
 using SimaiSharp.Internal.LexicalAnalysis;
 
 namespace SimaiSharp.Internal.SyntacticAnalysis.States
@@ -15,7 +16,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 				                    NumberStyles.Any,
 				                    CultureInfo.InvariantCulture,
 				                    out var explicitTempo))
-					throw ErrorHandler.DeserializationError(token, "Explicit tempo includes non-numeric value.");
+					throw new UnexpectedCharacterException(token.line, token.character + 1, "0~9, or \".\"");
 
 				parent.currentTiming.ExplicitOverride(explicitTempo);
 				return;
@@ -25,7 +26,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 			                    NumberStyles.Any,
 			                    CultureInfo.InvariantCulture,
 			                    out var subdivision))
-				throw ErrorHandler.DeserializationError(token, "Subdivision includes non-numeric value.");
+				throw new UnexpectedCharacterException(token.line, token.character, "0~9, or \".\"");
 
 			parent.currentTiming.subdivisions = subdivision;
 		}

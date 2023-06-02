@@ -1,6 +1,7 @@
 using System;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using SimaiSharp.Internal.Errors;
 using SimaiSharp.Internal.LexicalAnalysis;
 using SimaiSharp.Structures;
 
@@ -12,7 +13,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 		public static Note Process(Deserializer parent, Token identityToken)
 		{
 			if (!Deserializer.TryReadLocation(in identityToken, out var noteLocation))
-				throw ErrorHandler.DeserializationError(identityToken, "Invalid location declaration.");
+				throw new InvalidSyntaxException(identityToken.line, identityToken.character);
 
 			var currentNote = new Note(parent.currentNoteCollection!)
 			                  {
@@ -34,16 +35,15 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 				switch (token.type)
 				{
 					case TokenType.Tempo:
-						throw ErrorHandler.DeserializationError(in token,
-						                                        "Tempo should be declared outside of note scope.");
 					case TokenType.Subdivision:
-						throw ErrorHandler.DeserializationError(in token,
-						                                        "Subdivision should be declared outside of note scope.");
+						throw new ScopeMismatchException(token.line, token.character, ScopeMismatchException.ScopeType.Global);
+					
 					case TokenType.Decorator:
 					{
 						DecorateNote(in token, ref currentNote);
 						break;
 					}
+					
 					case TokenType.Slide:
 					{
 						var slide = SlideReader.Process(parent, in currentNote, in token);
@@ -52,24 +52,28 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 						currentNote.slidePaths.Add(slide);
 						break;
 					}
+					
 					case TokenType.Duration:
 					{
 						ReadDuration(in token, in parent.currentTiming, ref currentNote);
 						break;
 					}
+					
 					case TokenType.SlideJoiner:
-						throw ErrorHandler.DeserializationError(in token,
-						                                        "Slide joiners should be declared in slide scopes.");
+						throw new ScopeMismatchException(token.line, token.character, ScopeMismatchException.ScopeType.Slide);
+					
 					case TokenType.TimeStep:
 					case TokenType.EachDivider:
 					case TokenType.EndOfFile:
 					case TokenType.Location:
 						// note terminates here
 						return currentNote;
+					
 					case TokenType.None:
 						break;
+					
 					default:
-						throw new ArgumentOutOfRangeException();
+						throw new UnsupportedSyntaxException(token.line, token.character);
 				}
 			}
 
@@ -93,7 +97,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 				case 'm':
 					note.styles |= NoteStyles.Mine;
 					return;
-				case 'h' when note.type is not NoteType.Break or NoteType.ForceInvalidate:
+				case 'h' when note.type != NoteType.Break && note.type != NoteType.ForceInvalidate:
 					note.type   =   NoteType.Hold;
 					note.length ??= 0;
 					return;
@@ -124,10 +128,10 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 			if (token.lexeme.Span[0] == '#')
 			{
 				if (!float.TryParse(token.lexeme.Span[1..],
-				                    NumberStyles.Any,
-				                    CultureInfo.InvariantCulture,
-				                    out var explicitValue))
-					throw ErrorHandler.DeserializationError(token, "Invalid explicit hold duration syntax.");
+									NumberStyles.Any,
+									CultureInfo.InvariantCulture,
+									out var explicitValue))
+					throw new UnexpectedCharacterException(token.line, token.character + 1, "0~9, or \".\"");
 
 				note.length = explicitValue;
 				return;
@@ -138,13 +142,13 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 			                    NumberStyles.Any,
 			                    CultureInfo.InvariantCulture,
 			                    out var nominator))
-				throw ErrorHandler.DeserializationError(token, "Invalid hold duration nominator.");
+				throw new UnexpectedCharacterException(token.line, token.character, "0~9, or \".\"");
 
 			if (!float.TryParse(token.lexeme.Span[(indexOfSeparator + 1)..],
 			                    NumberStyles.Any,
 			                    CultureInfo.InvariantCulture,
 			                    out var denominator))
-				throw ErrorHandler.DeserializationError(token, "Invalid hold duration denominator.");
+				throw new UnexpectedCharacterException(token.line, token.character + indexOfSeparator + 1, "0~9, or \".\"");
 
 			note.length = timing.SecondsPerBar / (nominator / 4) * denominator;
 		}

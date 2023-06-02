@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using SimaiSharp.Internal.Errors;
 using SimaiSharp.Internal.LexicalAnalysis;
 
 namespace SimaiSharp.Internal.SyntacticAnalysis.States
@@ -13,7 +14,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 			                    NumberStyles.Any,
 			                    CultureInfo.InvariantCulture,
 			                    out var tempo))
-				throw ErrorHandler.DeserializationError(token, "Tempo includes non-numeric value.");
+				throw new UnexpectedCharacterException(token.line, token.character, "0~9, or \".\"");
 
 			parent.currentTiming.tempo = tempo;
 		}

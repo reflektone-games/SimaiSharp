@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using SimaiSharp.Internal.Errors;
 
 namespace SimaiSharp.Internal.LexicalAnalysis
 {
@@ -13,6 +14,8 @@ namespace SimaiSharp.Internal.LexicalAnalysis
 
 		private const char LineSeparator      = (char)0x2028;
 		private const char ParagraphSeparator = (char)0x2029;
+
+		private const char EndOfFileChar = 'E';
 
 		private static readonly HashSet<char> EachDividerChars = new()
 		                                                         {
@@ -50,7 +53,7 @@ namespace SimaiSharp.Internal.LexicalAnalysis
 
 		private readonly ReadOnlyMemory<char> _sequence;
 		private          int                  _current;
-		private          int                  _item;
+		private          int                  _charIndex;
 		private          int                  _line = 1;
 
 		private int _start;
@@ -78,7 +81,7 @@ namespace SimaiSharp.Internal.LexicalAnalysis
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private Token? ScanToken()
 		{
-			_item++;
+			_charIndex++;
 			var c = Advance();
 			switch (c)
 			{
@@ -86,13 +89,13 @@ namespace SimaiSharp.Internal.LexicalAnalysis
 					return CompileToken(TokenType.TimeStep);
 
 				case '(':
-					return CompileSectionDeclaration(TokenType.Tempo, ')');
+					return CompileSectionDeclaration(TokenType.Tempo, '(', ')');
 				case '{':
-					return CompileSectionDeclaration(TokenType.Subdivision, '}');
+					return CompileSectionDeclaration(TokenType.Subdivision, '{', '}');
 				case '[':
-					return CompileSectionDeclaration(TokenType.Duration, ']');
+					return CompileSectionDeclaration(TokenType.Duration, '[', ']');
 
-				case var _ when IsReadingLocationDeclaration(out var length):
+				case var _ when TryScanLocationToken(out var length):
 					_current += length - 1;
 					return CompileToken(TokenType.Location);
 
@@ -115,7 +118,7 @@ namespace SimaiSharp.Internal.LexicalAnalysis
 
 				case '\n':
 					_line++;
-					_item = 0;
+					_charIndex = 0;
 					return null;
 
 				case 'E':
@@ -124,8 +127,7 @@ namespace SimaiSharp.Internal.LexicalAnalysis
 				case '|':
 				{
 					if (Peek() != '|')
-						throw ErrorHandler.TokenizationError(_line, _item, Peek().ToString(),
-						                                     "Unexpected character");
+						throw new UnexpectedCharacterException(_line, _charIndex, "|");
 
 					while (Peek() != '\n')
 						Advance();
@@ -134,11 +136,11 @@ namespace SimaiSharp.Internal.LexicalAnalysis
 				}
 
 				default:
-					throw ErrorHandler.TokenizationError(_line, _item, c.ToString(), "Unexpected character");
+					throw new UnsupportedSyntaxException(_line, _charIndex);
 			}
 		}
 
-		private bool IsReadingLocationDeclaration(out int length)
+		private bool TryScanLocationToken(out int length)
 		{
 			var firstLocationChar = PeekPrevious();
 
@@ -150,7 +152,8 @@ namespace SimaiSharp.Internal.LexicalAnalysis
 
 			length = 0;
 
-			if (!IsSensorLocation(firstLocationChar)) return false;
+			if (!IsSensorLocation(firstLocationChar)) 
+				return false;
 
 			var secondLocationChar = Peek();
 
@@ -170,11 +173,10 @@ namespace SimaiSharp.Internal.LexicalAnalysis
 			                        secondLocationChar is '\n' or '\0';
 
 			// This is the notation for EOF.
-			if (firstLocationChar == 'E' && secondCharIsEmpty)
+			if (firstLocationChar == EndOfFileChar && secondCharIsEmpty)
 				return false;
 
-			throw ErrorHandler.TokenizationError(_line, _item, secondLocationChar.ToString(),
-			                                     "Invalid touch note expression");
+			throw new UnexpectedCharacterException(_line, _charIndex, "1, 2, 3, 4, 5, 6, 7, 8");
 		}
 
 		private bool IsReadingSlideDeclaration(out int length)
@@ -191,16 +193,13 @@ namespace SimaiSharp.Internal.LexicalAnalysis
 			return true;
 		}
 
-		private Token? CompileSectionDeclaration(TokenType tokenType, char terminator)
+		private Token? CompileSectionDeclaration(TokenType tokenType, char opener, char terminator)
 		{
 			_start++;
 			while (Peek() != terminator)
 			{
-				if (IsAtEnd)
-					throw ErrorHandler.TokenizationError(_line, _item,
-					                                     _sequence.Span[(_start - 1).._start].ToString(),
-					                                     "Unterminated section. " +
-					                                     $"You probably want to add a {terminator} here");
+				if (IsAtEnd || Peek() == opener)
+					throw new UnterminatedSectionException(_line, _charIndex);
 
 				Advance();
 			}
@@ -216,7 +215,7 @@ namespace SimaiSharp.Internal.LexicalAnalysis
 		private Token CompileToken(TokenType type)
 		{
 			var text = _sequence[_start.._current];
-			return new Token(type, text, _line);
+			return new Token(type, text, _line, _charIndex);
 		}
 
 		private static bool IsSensorLocation(char value)

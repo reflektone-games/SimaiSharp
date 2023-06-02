@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
+using SimaiSharp.Internal.Errors;
 using SimaiSharp.Internal.LexicalAnalysis;
 using SimaiSharp.Internal.SyntacticAnalysis.States;
 using SimaiSharp.Structures;
@@ -33,6 +35,8 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public MaiChart GetChart()
 		{
+			var noteCollections = new LinkedList<NoteCollection>();
+			
 			// Some readers (e.g. NoteReader) moves the enumerator automatically.
 			// We can skip moving the pointer if that's satisfied.
 			var manuallyMoved = false;
@@ -74,7 +78,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 					{
 						if (currentNoteCollection != null)
 						{
-							_chart.AddCollection(currentNoteCollection);
+							noteCollections.AddLast(currentNoteCollection);
 							currentNoteCollection = null;
 						}
 
@@ -96,29 +100,34 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 					}
 						break;
 					case TokenType.Decorator:
-						throw ErrorHandler.DeserializationError(token, "Decorators should be attached to notes.");
+						throw new ScopeMismatchException(token.line, token.character, ScopeMismatchException.ScopeType.Note);
 					case TokenType.Slide:
-						throw ErrorHandler.DeserializationError(token, "Slides should be attached to notes.");
+						throw new ScopeMismatchException(token.line, token.character, ScopeMismatchException.ScopeType.Note);
 					case TokenType.Duration:
-						throw ErrorHandler.DeserializationError(token,
-						                                        "Duration should be either attached to notes, or slides.");
+						throw new ScopeMismatchException(token.line, token.character, ScopeMismatchException.ScopeType.Note |
+																				   ScopeMismatchException.ScopeType.Slide);
 					case TokenType.SlideJoiner:
-						throw ErrorHandler.DeserializationError(token, "Slide joiners should be attached to slides.");
+						throw new ScopeMismatchException(token.line, token.character, ScopeMismatchException.ScopeType.Slide);
 					case TokenType.EndOfFile:
-						_chart.finishTiming = _currentTime;
+						_chart.FinishTiming = _currentTime;
 						break;
 					case TokenType.None:
 						break;
 					default:
-						throw ErrorHandler.DeserializationError(token, "Unexpected token.");
+						throw new UnsupportedSyntaxException(token.line, token.character);
 				}
 			}
 
 			if (currentNoteCollection == null)
+			{
+				_chart.NoteCollections = noteCollections.ToArray();
 				return _chart;
+			}
 
-			_chart.AddCollection(currentNoteCollection);
+			noteCollections.AddLast(currentNoteCollection);
 			currentNoteCollection = null;
+
+			_chart.NoteCollections = noteCollections.ToArray();
 			return _chart;
 		}
 

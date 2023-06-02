@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using SimaiSharp.Internal.Errors;
 using SimaiSharp.Internal.LexicalAnalysis;
 using SimaiSharp.Structures;
 
@@ -11,18 +12,18 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 	{
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static SlidePath Process(Deserializer parent,
-		                                in Note      currentNote,
-		                                in Token     identityToken)
+										in Note      currentNote,
+										in Token     identityToken)
 		{
 			var overrideTiming = new TimingChange
-			                     {
-				                     tempo = parent.currentTiming.tempo
-			                     };
+			{
+				tempo = parent.currentTiming.tempo
+			};
 
 			var path = new SlidePath(new List<SlideSegment>())
-			           {
-				           delay = overrideTiming.SecondsPerBeat
-			           };
+			{
+				delay = overrideTiming.SecondsPerBeat
+			};
 
 			ReadSegment(parent, identityToken, currentNote.location, ref path);
 
@@ -38,42 +39,46 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 				switch (token.type)
 				{
 					case TokenType.Tempo:
-						throw ErrorHandler.DeserializationError(in token,
-						                                        "Tempo should be declared outside of note scope.");
 					case TokenType.Subdivision:
-						throw ErrorHandler.DeserializationError(in token,
-						                                        "Subdivision should be declared outside of note scope.");
+						throw new ScopeMismatchException(token.line, token.character, ScopeMismatchException.ScopeType.Global);
+
 					case TokenType.Decorator:
 					{
 						DecorateSlide(in token, ref path);
 						break;
 					}
+
 					case TokenType.Slide:
 					{
 						ReadSegment(parent, token, path.segments[^1].vertices[^1], ref path);
 						manuallyMoved = true;
 						break;
 					}
+
 					case TokenType.Duration:
 					{
 						ReadDuration(in token, in parent.currentTiming, ref path);
 						break;
 					}
+
 					case TokenType.SlideJoiner:
 					{
 						parent.MoveNext();
 						return path;
 					}
+
 					case TokenType.TimeStep:
 					case TokenType.EachDivider:
 					case TokenType.EndOfFile:
 					case TokenType.Location:
 						// slide terminates here
 						return path;
+
 					case TokenType.None:
 						break;
+
 					default:
-						throw new ArgumentOutOfRangeException();
+						throw new UnsupportedSyntaxException(token.line, token.character);
 				}
 			}
 
@@ -82,9 +87,9 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static void ReadSegment(Deserializer  parent,
-		                                Token         identityToken,
-		                                Location      startingLocation,
-		                                ref SlidePath path)
+										Token         identityToken,
+										Location      startingLocation,
+										ref SlidePath path)
 		{
 			var segment = new SlideSegment(new List<Location>(1));
 			var length  = identityToken.lexeme.Length;
@@ -103,27 +108,27 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 					path.type = NoteType.Break;
 					return;
 				default:
-					throw ErrorHandler.DeserializationError(token, "Invalid slide decorator.");
+					throw new UnsupportedSyntaxException(token.line, token.character);
 			}
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static SlideType IdentifySlideType(in Token        identityToken,
-		                                           in Location     startingLocation,
-		                                           in SlideSegment segment,
-		                                           in int          length)
+												   in Location     startingLocation,
+												   in SlideSegment segment,
+												   in int          length)
 		{
 			return identityToken.lexeme.Span[0] switch
 			{
 				'-' => SlideType.StraightLine,
 				'>' => Deserializer.DetermineRingType(startingLocation,
-				                                      segment.vertices[0],
-				                                      1),
+													  segment.vertices[0],
+													  1),
 				'<' => Deserializer.DetermineRingType(startingLocation,
-				                                      segment.vertices[0],
-				                                      -1),
+													  segment.vertices[0],
+													  -1),
 				'^' => Deserializer.DetermineRingType(startingLocation,
-				                                      segment.vertices[0]),
+													  segment.vertices[0]),
 				'q' when length == 2 && identityToken.lexeme.Span[1] == 'q' =>
 					SlideType.EdgeCurveCw,
 				'q' => SlideType.CurveCw,
@@ -135,8 +140,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 				's' => SlideType.ZigZagS,
 				'z' => SlideType.ZigZagZ,
 				'w' => SlideType.Fan,
-				_ => throw ErrorHandler.DeserializationError(in identityToken,
-				                                             "Slide type not recognized.")
+				_   => throw new UnexpectedCharacterException(identityToken.line, identityToken.character, "-, >, <, ^, q, p, v, V, s, z, w")
 			};
 		}
 
@@ -146,12 +150,11 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 			do
 			{
 				if (!parent.enumerator.MoveNext())
-					throw ErrorHandler.DeserializationError(in identityToken,
-					                                        "Unexpected end of file reached.");
+					throw new UnexpectedCharacterException(identityToken.line, identityToken.character, "1, 2, 3, 4, 5, 6, 7, 8");
 
 				var current = parent.enumerator.Current;
 				if (Deserializer.TryReadLocation(in current,
-				                                 out var location))
+												 out var location))
 					segment.vertices.Add(location);
 			} while (parent.enumerator.Current.type == TokenType.Location);
 		}
@@ -175,25 +178,18 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 
 				var delayDeclaration    = token.lexeme.Span[..firstHashIndex];
 				var isExplicitStatement = firstHashIndex != lastHashIndex;
-				if (isExplicitStatement)
-				{
-					if (!float.TryParse(delayDeclaration,
-					                    NumberStyles.Any,
-					                    CultureInfo.InvariantCulture,
-					                    out var explicitValue))
-						throw ErrorHandler.DeserializationError(token, "Invalid explicit slide delay syntax.");
 
-					path.delay = explicitValue;
-				}
+				if (!float.TryParse(delayDeclaration,
+									NumberStyles.Any,
+									CultureInfo.InvariantCulture,
+									out var delayValue))
+					throw new UnexpectedCharacterException(token.line, token.character, "0~9, or \".\"");
+
+				if (isExplicitStatement)
+					path.delay = delayValue;
 				else
 				{
-					if (!float.TryParse(delayDeclaration,
-					                    NumberStyles.Any,
-					                    CultureInfo.InvariantCulture,
-					                    out var tempoValue))
-						throw ErrorHandler.DeserializationError(token, "Invalid explicit slide delay syntax.");
-
-					overrideTiming.tempo = tempoValue;
+					overrideTiming.tempo = delayValue;
 					path.delay           = overrideTiming.SecondsPerBar;
 				}
 			}
@@ -207,25 +203,26 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 			if (indexOfSeparator == -1)
 			{
 				if (!float.TryParse(durationDeclaration,
-				                    NumberStyles.Any,
-				                    CultureInfo.InvariantCulture,
-				                    out var explicitValue))
-					throw ErrorHandler.DeserializationError(token, "Invalid explicit slide duration syntax.");
+									NumberStyles.Any,
+									CultureInfo.InvariantCulture,
+									out var explicitValue))
+					throw new UnexpectedCharacterException(token.line, token.character + startOfDurationDeclaration, "0~9, or \".\"");
 
 				path.duration += explicitValue;
 				return;
 			}
 
 			if (!float.TryParse(durationDeclaration[..indexOfSeparator], NumberStyles.Any,
-			                    CultureInfo.InvariantCulture,
-			                    out var nominator))
-				throw ErrorHandler.DeserializationError(token, "Invalid slide duration nominator.");
+								CultureInfo.InvariantCulture,
+								out var nominator))
+				throw new UnexpectedCharacterException(token.line, token.character + startOfDurationDeclaration, "0~9, or \".\"");
 
 			if (!float.TryParse(durationDeclaration[(indexOfSeparator + 1)..],
-			                    NumberStyles.Any,
-			                    CultureInfo.InvariantCulture,
-			                    out var denominator))
-				throw ErrorHandler.DeserializationError(token, "Invalid slide duration denominator.");
+								NumberStyles.Any,
+								CultureInfo.InvariantCulture,
+								out var denominator))
+				throw new UnexpectedCharacterException(token.line, token.character + startOfDurationDeclaration
+																				   + indexOfSeparator + 1, "0~9, or \".\"");
 
 			path.duration += overrideTiming.SecondsPerBar / (nominator / 4) * denominator;
 		}

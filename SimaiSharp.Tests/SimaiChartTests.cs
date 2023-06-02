@@ -14,7 +14,7 @@ public class SimaiChartTests
 		var simaiFile = new SimaiFile(maidataFilePath);
 		var chart     = SimaiConvert.Deserialize(simaiFile.GetValue(chartKey));
 
-		Assert.That(chart.noteCollections, Is.Empty);
+		Assert.That(chart.NoteCollections, Is.Empty);
 	}
 
 	[Test]
@@ -26,9 +26,9 @@ public class SimaiChartTests
 		var simaiFile = new SimaiFile(maidataFilePath);
 		var chart     = SimaiConvert.Deserialize(simaiFile.GetValue(chartKey));
 
-		Assert.That(chart.noteCollections, Has.Count.EqualTo(1));
-		Assert.That(chart.noteCollections[0], Has.Count.EqualTo(1));
-		Assert.That(chart.noteCollections[0][0].location is { group: NoteGroup.Tap, index: 0 });
+		Assert.That(chart.NoteCollections, Has.Length.EqualTo(1));
+		Assert.That(chart.NoteCollections[0], Has.Count.EqualTo(1));
+		Assert.That(chart.NoteCollections[0][0].location is { group: NoteGroup.Tap, index: 0 });
 	}
 	
 	[Test]
@@ -40,18 +40,18 @@ public class SimaiChartTests
 		var simaiFile = new SimaiFile(maidataFilePath);
 		var chart     = SimaiConvert.Deserialize(simaiFile.GetValue(chartKey));
 
-		Assert.That(chart.noteCollections, Has.Count.EqualTo(1));
-		Assert.That(chart.noteCollections[0], Has.Count.EqualTo(8));
+		Assert.That(chart.NoteCollections, Has.Length.EqualTo(1));
+		Assert.That(chart.NoteCollections[0], Has.Count.EqualTo(8));
         Assert.Multiple(() =>
         {
-            Assert.That(chart.noteCollections[0][0].location is { group: NoteGroup.Tap, index: 0 });
-            Assert.That(chart.noteCollections[0][1].location is { group: NoteGroup.Tap, index: 1 });
-            Assert.That(chart.noteCollections[0][2].location is { group: NoteGroup.Tap, index: 2 });
-            Assert.That(chart.noteCollections[0][3].location is { group: NoteGroup.Tap, index: 3 });
-            Assert.That(chart.noteCollections[0][4].location is { group: NoteGroup.Tap, index: 4 });
-            Assert.That(chart.noteCollections[0][5].location is { group: NoteGroup.Tap, index: 5 });
-            Assert.That(chart.noteCollections[0][6].location is { group: NoteGroup.Tap, index: 6 });
-            Assert.That(chart.noteCollections[0][7].location is { group: NoteGroup.Tap, index: 7 });
+            Assert.That(chart.NoteCollections[0][0].location is { group: NoteGroup.Tap, index: 0 });
+            Assert.That(chart.NoteCollections[0][1].location is { group: NoteGroup.Tap, index: 1 });
+            Assert.That(chart.NoteCollections[0][2].location is { group: NoteGroup.Tap, index: 2 });
+            Assert.That(chart.NoteCollections[0][3].location is { group: NoteGroup.Tap, index: 3 });
+            Assert.That(chart.NoteCollections[0][4].location is { group: NoteGroup.Tap, index: 4 });
+            Assert.That(chart.NoteCollections[0][5].location is { group: NoteGroup.Tap, index: 5 });
+            Assert.That(chart.NoteCollections[0][6].location is { group: NoteGroup.Tap, index: 6 });
+            Assert.That(chart.NoteCollections[0][7].location is { group: NoteGroup.Tap, index: 7 });
         });
     }
 	
@@ -64,18 +64,18 @@ public class SimaiChartTests
 		var simaiFile = new SimaiFile(maidataFilePath);
 		var chart     = SimaiConvert.Deserialize(simaiFile.GetValue(chartKey));
 
-		Assert.That(chart.noteCollections, Has.Count.EqualTo(1));
-		Assert.That(chart.noteCollections[0], Has.Count.EqualTo(8));
+		Assert.That(chart.NoteCollections, Has.Length.EqualTo(1));
+		Assert.That(chart.NoteCollections[0], Has.Count.EqualTo(8));
 		Assert.Multiple(() =>
 		                {
-			                Assert.That(chart.noteCollections[0][0].location is { group: NoteGroup.Tap, index: 0 });
-			                Assert.That(chart.noteCollections[0][1].location is { group: NoteGroup.Tap, index: 1 });
-			                Assert.That(chart.noteCollections[0][2].location is { group: NoteGroup.Tap, index: 2 });
-			                Assert.That(chart.noteCollections[0][3].location is { group: NoteGroup.Tap, index: 3 });
-			                Assert.That(chart.noteCollections[0][4].location is { group: NoteGroup.Tap, index: 4 });
-			                Assert.That(chart.noteCollections[0][5].location is { group: NoteGroup.Tap, index: 5 });
-			                Assert.That(chart.noteCollections[0][6].location is { group: NoteGroup.Tap, index: 6 });
-			                Assert.That(chart.noteCollections[0][7].location is { group: NoteGroup.Tap, index: 7 });
+			                Assert.That(chart.NoteCollections[0][0].location is { group: NoteGroup.Tap, index: 0 });
+			                Assert.That(chart.NoteCollections[0][1].location is { group: NoteGroup.Tap, index: 1 });
+			                Assert.That(chart.NoteCollections[0][2].location is { group: NoteGroup.Tap, index: 2 });
+			                Assert.That(chart.NoteCollections[0][3].location is { group: NoteGroup.Tap, index: 3 });
+			                Assert.That(chart.NoteCollections[0][4].location is { group: NoteGroup.Tap, index: 4 });
+			                Assert.That(chart.NoteCollections[0][5].location is { group: NoteGroup.Tap, index: 5 });
+			                Assert.That(chart.NoteCollections[0][6].location is { group: NoteGroup.Tap, index: 6 });
+			                Assert.That(chart.NoteCollections[0][7].location is { group: NoteGroup.Tap, index: 7 });
 		                });
 	}
 
@@ -88,8 +88,8 @@ public class SimaiChartTests
 		var simaiFile = new SimaiFile(maidataFilePath);
 		var chart     = SimaiConvert.Deserialize(simaiFile.GetValue(chartKey));
 
-		Assert.That(chart.noteCollections, Has.Count.EqualTo(2));
-		Assert.That(chart.noteCollections[1].time, Is.EqualTo(1));
+		Assert.That(chart.NoteCollections, Has.Length.EqualTo(2));
+		Assert.That(chart.NoteCollections[1].time, Is.EqualTo(1));
 	}
 	
 	[Test]
@@ -101,11 +101,11 @@ public class SimaiChartTests
 		var simaiFile = new SimaiFile(maidataFilePath);
 		var chart     = SimaiConvert.Deserialize(simaiFile.GetValue(chartKey));
 
-		Assert.That(chart.noteCollections, Has.Count.EqualTo(3));
+		Assert.That(chart.NoteCollections, Has.Length.EqualTo(3));
         Assert.Multiple(() =>
         {
-            Assert.That(chart.noteCollections[1].time, Is.EqualTo(1));
-            Assert.That(chart.noteCollections[2].time, Is.EqualTo(1.5f));
+            Assert.That(chart.NoteCollections[1].time, Is.EqualTo(1));
+            Assert.That(chart.NoteCollections[2].time, Is.EqualTo(1.5f));
         });
     }
 }
