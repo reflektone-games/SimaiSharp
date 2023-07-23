@@ -89,11 +89,11 @@ namespace SimaiSharp.Internal.LexicalAnalysis
 					return CompileToken(TokenType.TimeStep);
 
 				case '(':
-					return CompileSectionDeclaration(TokenType.Tempo, '(', ')');
+					return CompileSectionToken(TokenType.Tempo, '(', ')');
 				case '{':
-					return CompileSectionDeclaration(TokenType.Subdivision, '{', '}');
+					return CompileSectionToken(TokenType.Subdivision, '{', '}');
 				case '[':
-					return CompileSectionDeclaration(TokenType.Duration, '[', ']');
+					return CompileSectionToken(TokenType.Duration, '[', ']');
 
 				case var _ when TryScanLocationToken(out var length):
 					_current += length - 1;
@@ -193,12 +193,12 @@ namespace SimaiSharp.Internal.LexicalAnalysis
 			return true;
 		}
 
-		private Token? CompileSectionDeclaration(TokenType tokenType, char opener, char terminator)
+		private Token? CompileSectionToken(TokenType tokenType, char initiator, char terminator)
 		{
 			_start++;
 			while (Peek() != terminator)
 			{
-				if (IsAtEnd || Peek() == opener)
+				if (IsAtEnd || Peek() == initiator)
 					throw new UnterminatedSectionException(_line, _charIndex);
 
 				Advance();
