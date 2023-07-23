@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -6,36 +7,57 @@ using SimaiSharp.Internal;
 
 namespace SimaiSharp
 {
-	public sealed class SimaiFile
+	public sealed class SimaiFile : IDisposable
 	{
-		private readonly string _fullFilePath;
+		private readonly StreamReader _simaiReader;
 
-		public SimaiFile(string path)
-		{
-			_fullFilePath = path;
-		}
-
-		public IEnumerable<KeyValuePair<string, string>> ToKeyValuePairs()
+		public SimaiFile(FileSystemInfo file)
 		{
 			const int sampleSize = 64;
 
-			using var fileStream = new FileStream(_fullFilePath, FileMode.Open, FileAccess.Read);
+			var fileStream = new FileStream(file.FullName, FileMode.Open, FileAccess.Read);
 
 			// Determine the encoding of the file
 			var buffer       = new byte[64];
 			var numCharsRead = fileStream.Read(buffer, 0, 64);
 			var encoding     = buffer[..numCharsRead].TryGetEncoding(sampleSize);
 
-			using var reader = new StreamReader(fileStream, encoding);
-			// We've already read 64 chars in line 27, so we'll reset here.
-			reader.BaseStream.Position = 0;
+			// We've already read 64 chars, so we'll reset here.
+			fileStream.Position = 0;
 
-			var currentKey   = "";
+			_simaiReader = new StreamReader(fileStream, encoding);
+		}
+
+		public SimaiFile(string text)
+		{
+			var stream = new MemoryStream();
+
+			using var writer = new StreamWriter(stream);
+			writer.Write(text);
+			writer.Flush();
+			stream.Position = 0;
+
+			_simaiReader = new StreamReader(stream);
+		}
+
+		public SimaiFile(Stream stream)
+		{
+			_simaiReader = new StreamReader(stream);
+		}
+
+		public SimaiFile(StreamReader reader)
+		{
+			_simaiReader = reader;
+		}
+
+		public IEnumerable<KeyValuePair<string, string>> ToKeyValuePairs()
+		{
+			var currentKey   = string.Empty;
 			var currentValue = new StringBuilder();
 
-			while (!reader.EndOfStream)
+			while (!_simaiReader.EndOfStream)
 			{
-				var line = reader.ReadLine();
+				var line = _simaiReader.ReadLine();
 
 				if (line == null)
 					break;
@@ -65,6 +87,11 @@ namespace SimaiSharp
 		public string GetValue(string key)
 		{
 			return ToKeyValuePairs().FirstOrDefault(parameterPair => parameterPair.Key == key).Value;
+		}
+
+		public void Dispose()
+		{
+			_simaiReader.Dispose();
 		}
 	}
 }
