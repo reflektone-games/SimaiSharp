@@ -13,10 +13,12 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 	{
 		private readonly  MaiChart           _chart = new();
 		internal readonly IEnumerator<Token> enumerator;
-		private           float              _currentTime;
-		internal          NoteCollection?    currentNoteCollection;
-		internal          TimingChange       currentTiming;
-		internal          bool               endOfFile;
+
+		private  float           _maxFinishTime;
+		private  float           _currentTime;
+		internal NoteCollection? currentNoteCollection;
+		internal TimingChange    currentTiming;
+		internal bool            endOfFile;
 
 		public Deserializer(IEnumerable<Token> sequence)
 		{
@@ -36,7 +38,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 		public MaiChart GetChart()
 		{
 			var noteCollections = new LinkedList<NoteCollection>();
-			
+
 			// Some readers (e.g. NoteReader) moves the enumerator automatically.
 			// We can skip moving the pointer if that's satisfied.
 			var manuallyMoved = false;
@@ -72,6 +74,8 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 						var note = NoteReader.Process(this, token);
 						currentNoteCollection.AddNote(ref note);
 						manuallyMoved = true;
+
+						_maxFinishTime = Math.Max(_maxFinishTime, currentNoteCollection.time + note.GetVisibleDuration());
 						break;
 					}
 					case TokenType.TimeStep:
@@ -89,9 +93,9 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 					{
 						switch (token.lexeme.Span[0])
 						{
-							case '/': 
+							case '/':
 								break;
-							
+
 							case '`':
 								if (currentNoteCollection != null)
 									currentNoteCollection.eachStyle = EachStyle.ForceBroken;
@@ -100,14 +104,18 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 					}
 						break;
 					case TokenType.Decorator:
-						throw new ScopeMismatchException(token.line, token.character, ScopeMismatchException.ScopeType.Note);
+						throw new ScopeMismatchException(token.line, token.character,
+						                                 ScopeMismatchException.ScopeType.Note);
 					case TokenType.Slide:
-						throw new ScopeMismatchException(token.line, token.character, ScopeMismatchException.ScopeType.Note);
+						throw new ScopeMismatchException(token.line, token.character,
+						                                 ScopeMismatchException.ScopeType.Note);
 					case TokenType.Duration:
-						throw new ScopeMismatchException(token.line, token.character, ScopeMismatchException.ScopeType.Note |
-																				   ScopeMismatchException.ScopeType.Slide);
+						throw new ScopeMismatchException(token.line, token.character,
+						                                 ScopeMismatchException.ScopeType.Note |
+						                                 ScopeMismatchException.ScopeType.Slide);
 					case TokenType.SlideJoiner:
-						throw new ScopeMismatchException(token.line, token.character, ScopeMismatchException.ScopeType.Slide);
+						throw new ScopeMismatchException(token.line, token.character,
+						                                 ScopeMismatchException.ScopeType.Slide);
 					case TokenType.EndOfFile:
 						_chart.FinishTiming = _currentTime;
 						break;
@@ -128,6 +136,9 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 			currentNoteCollection = null;
 
 			_chart.NoteCollections = noteCollections.ToArray();
+
+			_chart.FinishTiming ??= _maxFinishTime;
+
 			return _chart;
 		}
 
@@ -165,7 +176,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 				                 : token.lexeme.Span[..];
 
 			var group = NoteGroup.Tap;
-			
+
 			if (isSensor)
 			{
 				group = (NoteGroup)(token.lexeme.Span[0] - 'A' + 1);

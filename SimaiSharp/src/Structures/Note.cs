@@ -41,7 +41,7 @@ namespace SimaiSharp.Structures
 			var baseValue = length ?? 0;
 
 			if (slidePaths is { Count: > 0 })
-				baseValue += slidePaths.Max(s => s.duration);
+				baseValue = slidePaths.Max(s => s.delay + s.duration);
 
 			return baseValue;
 		}
