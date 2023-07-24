@@ -126,18 +126,15 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 				}
 			}
 
-			if (currentNoteCollection == null)
+			_chart.FinishTiming ??= _maxFinishTime;
+
+			if (currentNoteCollection != null)
 			{
-				_chart.NoteCollections = noteCollections.ToArray();
-				return _chart;
+				noteCollections.AddLast(currentNoteCollection);
+				currentNoteCollection = null;
 			}
 
-			noteCollections.AddLast(currentNoteCollection);
-			currentNoteCollection = null;
-
 			_chart.NoteCollections = noteCollections.ToArray();
-
-			_chart.FinishTiming ??= _maxFinishTime;
 
 			return _chart;
 		}
