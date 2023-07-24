@@ -51,7 +51,8 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 					
 					case TokenType.Slide:
 					{
-						currentNote.length = overrideTiming.SecondsPerBeat;
+						if (currentNote.type == NoteType.Hold) currentNote.length = overrideTiming.SecondsPerBeat;
+
 						var slide = SlideReader.Process(parent, in currentNote, in token, in overrideTiming);
 						manuallyMoved = true;
 
