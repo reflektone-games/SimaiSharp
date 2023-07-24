@@ -13,16 +13,12 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static SlidePath Process(Deserializer parent,
 										in Note      currentNote,
-										in Token     identityToken)
+										in Token     identityToken,
+										in TimingChange defaultTimingChange)
 		{
-			var overrideTiming = new TimingChange
-			{
-				tempo = parent.currentTiming.tempo
-			};
-
 			var path = new SlidePath(new List<SlideSegment>())
 			{
-				delay = overrideTiming.SecondsPerBeat
+				delay = defaultTimingChange.SecondsPerBeat
 			};
 
 			ReadSegment(parent, identityToken, currentNote.location, ref path);

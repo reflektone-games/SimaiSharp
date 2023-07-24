@@ -20,6 +20,11 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 				                  location = noteLocation
 			                  };
 
+			var overrideTiming = new TimingChange
+			{
+				tempo = parent.currentTiming.tempo
+			};
+
 			if (noteLocation.group != NoteGroup.Tap)
 				currentNote.type = NoteType.Touch;
 
@@ -46,7 +51,8 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 					
 					case TokenType.Slide:
 					{
-						var slide = SlideReader.Process(parent, in currentNote, in token);
+						currentNote.length = overrideTiming.SecondsPerBeat;
+						var slide = SlideReader.Process(parent, in currentNote, in token, in overrideTiming);
 						manuallyMoved = true;
 
 						currentNote.slidePaths.Add(slide);
