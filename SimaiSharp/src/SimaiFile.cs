@@ -31,8 +31,7 @@ namespace SimaiSharp
 		public SimaiFile(string text)
 		{
 			var stream = new MemoryStream();
-
-			using var writer = new StreamWriter(stream);
+			var writer = new StreamWriter(stream);
 			writer.Write(text);
 			writer.Flush();
 			stream.Position = 0;
