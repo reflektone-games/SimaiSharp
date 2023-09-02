@@ -73,6 +73,7 @@ namespace SimaiSharp.Internal.LexicalAnalysis
 				_start = _current;
 
 				var nextToken = ScanToken();
+
 				if (nextToken.HasValue)
 					yield return nextToken.Value;
 			}
@@ -129,7 +130,7 @@ namespace SimaiSharp.Internal.LexicalAnalysis
 					if (Peek() != '|')
 						throw new UnexpectedCharacterException(_line, _charIndex, "|");
 
-					while (Peek() != '\n')
+					while (Peek() != '\n' && !IsAtEnd)
 						Advance();
 
 					return null;
