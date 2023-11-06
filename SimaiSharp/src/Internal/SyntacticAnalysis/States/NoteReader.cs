@@ -22,7 +22,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 
 			var overrideTiming = new TimingChange
 			{
-				tempo = parent.currentTiming.tempo
+				tempo = parent.timingChanges.Last.Value.tempo
 			};
 
 			if (noteLocation.group != NoteGroup.Tap)
@@ -62,7 +62,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 					
 					case TokenType.Duration:
 					{
-						ReadDuration(in token, in parent.currentTiming, ref currentNote);
+						ReadDuration(parent.timingChanges.Last.Value, in token, ref currentNote);
 						break;
 					}
 					
@@ -127,7 +127,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 			}
 		}
 
-		private static void ReadDuration(in Token token, in TimingChange timing, ref Note note)
+		private static void ReadDuration(TimingChange timing, in Token token, ref Note note)
 		{
 			if (note.type != NoteType.Break)
 				note.type = NoteType.Hold;

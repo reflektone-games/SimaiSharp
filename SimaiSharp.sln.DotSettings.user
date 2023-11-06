@@ -2,7 +2,8 @@
 	<s:Int64 x:Key="/Default/Dpa/Thresholds/=AllocationClosure/@EntryIndexedValue">1048576</s:Int64>
 	<s:Int64 x:Key="/Default/Dpa/Thresholds/=AllocationLoh/@EntryIndexedValue">1048576</s:Int64>
 	<s:Int64 x:Key="/Default/Dpa/Thresholds/=AllocationTopSoh/@EntryIndexedValue">1048576</s:Int64>
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=d1f328c1_002D9c81_002D4a6c_002Da747_002Dc2c5778dc5ea/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="SimaiFileRead" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
-  &lt;Solution /&gt;&#xD;
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=42230e17_002D536d_002D4a96_002D8901_002D796e081c0458/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="All tests from &amp;lt;SimaiSharp.Tests&amp;gt;" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+  &lt;Project Location="D:\Archive\Projects\SimaiSharp\SimaiSharp.Tests" Presentation="&amp;lt;SimaiSharp.Tests&amp;gt;" /&gt;&#xD;
 &lt;/SessionState&gt;</s:String>
+	
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=Maidata/@EntryIndexedValue">True</s:Boolean></wpf:ResourceDictionary>

@@ -1,3 +1,4 @@
+using System;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using SimaiSharp.Internal.Errors;
@@ -18,17 +19,30 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 				                    out var explicitTempo))
 					throw new UnexpectedCharacterException(token.line, token.character + 1, "0~9, or \".\"");
 
-				parent.currentTiming.ExplicitOverride(explicitTempo);
+				var newTimingChange = parent.timingChanges.Last.Value;
+				newTimingChange.ExplicitOverride(explicitTempo);
+
+				if (Math.Abs(parent.timingChanges.Last.Value.time - parent.currentTime) <= float.Epsilon)
+					parent.timingChanges.RemoveLast();
+
+				parent.timingChanges.AddLast(newTimingChange);
 				return;
 			}
 
 			if (!float.TryParse(token.lexeme.Span,
-			                    NumberStyles.Any,
-			                    CultureInfo.InvariantCulture,
-			                    out var subdivision))
-				throw new UnexpectedCharacterException(token.line, token.character, "0~9, or \".\"");
+								NumberStyles.Any,
+								CultureInfo.InvariantCulture,
+								out var subdivision)) throw new UnexpectedCharacterException(token.line, token.character, "0~9, or \".\"");
 
-			parent.currentTiming.subdivisions = subdivision;
+			{
+				var newTimingChange = parent.timingChanges.Last.Value;
+				newTimingChange.subdivisions = subdivision;
+
+				if (Math.Abs(parent.timingChanges.Last.Value.time - parent.currentTime) <= float.Epsilon)
+					parent.timingChanges.RemoveLast();
+
+				parent.timingChanges.AddLast(newTimingChange);
+			}
 		}
 	}
 }
