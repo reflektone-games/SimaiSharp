@@ -16,9 +16,9 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 				throw new InvalidSyntaxException(identityToken.line, identityToken.character);
 
 			var currentNote = new Note(parent.currentNoteCollection!)
-			                  {
-				                  location = noteLocation
-			                  };
+			{
+				location = noteLocation
+			};
 
 			var overrideTiming = new TimingChange
 			{
@@ -42,13 +42,13 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 					case TokenType.Tempo:
 					case TokenType.Subdivision:
 						throw new ScopeMismatchException(token.line, token.character, ScopeMismatchException.ScopeType.Global);
-					
+
 					case TokenType.Decorator:
 					{
 						DecorateNote(in token, ref currentNote);
 						break;
 					}
-					
+
 					case TokenType.Slide:
 					{
 						if (currentNote.type == NoteType.Hold) currentNote.length = overrideTiming.SecondsPerBeat;
@@ -59,26 +59,26 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 						currentNote.slidePaths.Add(slide);
 						break;
 					}
-					
+
 					case TokenType.Duration:
 					{
 						ReadDuration(parent.timingChanges.Last.Value, in token, ref currentNote);
 						break;
 					}
-					
+
 					case TokenType.SlideJoiner:
 						throw new ScopeMismatchException(token.line, token.character, ScopeMismatchException.ScopeType.Slide);
-					
+
 					case TokenType.TimeStep:
 					case TokenType.EachDivider:
 					case TokenType.EndOfFile:
 					case TokenType.Location:
 						// note terminates here
 						return currentNote;
-					
+
 					case TokenType.None:
 						break;
-					
+
 					default:
 						throw new UnsupportedSyntaxException(token.line, token.character);
 				}
@@ -104,16 +104,17 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 				case 'm':
 					note.styles |= NoteStyles.Mine;
 					return;
-				case 'h' when note.type != NoteType.Break && note.type != NoteType.ForceInvalidate:
-					note.type   =   NoteType.Hold;
+				case 'h':
+					if (note.type != NoteType.Break && note.type != NoteType.ForceInvalidate)
+						note.type = NoteType.Hold;
 					note.length ??= 0;
 					return;
 				case '?':
-					note.type       = NoteType.ForceInvalidate;
+					note.type = NoteType.ForceInvalidate;
 					note.slideMorph = SlideMorph.FadeIn;
 					return;
 				case '!':
-					note.type       = NoteType.ForceInvalidate;
+					note.type = NoteType.ForceInvalidate;
 					note.slideMorph = SlideMorph.SuddenIn;
 					return;
 				case '@':
@@ -121,8 +122,8 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 					return;
 				case '$':
 					note.appearance = note.appearance is NoteAppearance.ForceStar
-						                  ? NoteAppearance.ForceStarSpinning
-						                  : NoteAppearance.ForceStar;
+										  ? NoteAppearance.ForceStarSpinning
+										  : NoteAppearance.ForceStar;
 					return;
 			}
 		}
@@ -146,15 +147,15 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 
 			var indexOfSeparator = token.lexeme.Span.IndexOf(':');
 			if (!float.TryParse(token.lexeme.Span[..indexOfSeparator],
-			                    NumberStyles.Any,
-			                    CultureInfo.InvariantCulture,
-			                    out var nominator))
+								NumberStyles.Any,
+								CultureInfo.InvariantCulture,
+								out var nominator))
 				throw new UnexpectedCharacterException(token.line, token.character, "0~9, or \".\"");
 
 			if (!float.TryParse(token.lexeme.Span[(indexOfSeparator + 1)..],
-			                    NumberStyles.Any,
-			                    CultureInfo.InvariantCulture,
-			                    out var denominator))
+								NumberStyles.Any,
+								CultureInfo.InvariantCulture,
+								out var denominator))
 				throw new UnexpectedCharacterException(token.line, token.character + indexOfSeparator + 1, "0~9, or \".\"");
 
 			note.length = timing.SecondsPerBar / (nominator / 4) * denominator;
