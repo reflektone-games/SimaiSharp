@@ -20,7 +20,8 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 					throw new UnexpectedCharacterException(token.line, token.character + 1, "0~9, or \".\"");
 
 				var newTimingChange = parent.timingChanges.Last.Value;
-				newTimingChange.ExplicitOverride(explicitTempo);
+				newTimingChange.SetSeconds(explicitTempo);
+				newTimingChange.time = parent.currentTime;
 
 				if (Math.Abs(parent.timingChanges.Last.Value.time - parent.currentTime) <= float.Epsilon)
 					parent.timingChanges.RemoveLast();
@@ -37,6 +38,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 			{
 				var newTimingChange = parent.timingChanges.Last.Value;
 				newTimingChange.subdivisions = subdivision;
+				newTimingChange.time = parent.currentTime;
 
 				if (Math.Abs(parent.timingChanges.Last.Value.time - parent.currentTime) <= float.Epsilon)
 					parent.timingChanges.RemoveLast();

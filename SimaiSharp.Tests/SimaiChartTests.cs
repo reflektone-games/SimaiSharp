@@ -108,4 +108,18 @@ public class SimaiChartTests
 			Assert.That(chart.NoteCollections[2].time, Is.EqualTo(1.5f));
 		});
 	}
+
+	[Test]
+	public void CanSerialize()
+	{
+		const string maidataFilePath = @"./Resources/SimaiFileTests/0.txt";
+		const string chartKey        = @"inote_3";
+
+		using var simaiFile = new SimaiFile(new FileInfo(maidataFilePath));
+		var       chart     = SimaiConvert.Deserialize(simaiFile.GetValue(chartKey));
+
+		var serialized = SimaiConvert.Serialize(chart);
+		Console.WriteLine(serialized);
+		Assert.That(serialized, Is.Not.Empty);
+	}
 }

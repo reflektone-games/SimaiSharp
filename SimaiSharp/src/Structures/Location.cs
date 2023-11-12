@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 
 namespace SimaiSharp.Structures
 {
@@ -45,7 +46,26 @@ namespace SimaiSharp.Structures
 
 		public override string ToString()
 		{
-			return $"{nameof(index)}: {index}, {nameof(group)}: {group}";
+			switch (group)
+			{
+				case NoteGroup.Tap:
+					return (index + 1).ToString(CultureInfo.InvariantCulture);
+				case NoteGroup.CSensor:
+					return "C";
+				default:
+				{
+					var groupChar = group switch
+									{
+									NoteGroup.ASensor => 'A',
+									NoteGroup.BSensor => 'B',
+									NoteGroup.DSensor => 'D',
+									NoteGroup.ESensor => 'E',
+									_ => throw new ArgumentOutOfRangeException()
+									};
+
+					return $"{groupChar}{index + 1}";
+				}
+			}
 		}
 	}
 }

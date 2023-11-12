@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace SimaiSharp.Structures
 {
@@ -25,6 +26,17 @@ namespace SimaiSharp.Structures
 			delay         = 0;
 			duration      = 0;
 			type          = NoteType.Slide;
+		}
+
+		public void WriteTo(StringWriter writer)
+		{
+			foreach (var segment in segments)
+				segment.WriteTo(writer, startLocation);
+
+			if (type == NoteType.Break)
+				writer.Write('b');
+
+			writer.Write($"[{delay:0.0000000}##{duration:0.0000000}]");
 		}
 	}
 }

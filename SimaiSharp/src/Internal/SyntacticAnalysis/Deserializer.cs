@@ -135,6 +135,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 			}
 
 			_chart.NoteCollections = noteCollections.ToArray();
+			_chart.TimingChanges = timingChanges.ToArray();
 
 			return _chart;
 		}
