@@ -53,7 +53,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 
 					case TokenType.Duration:
 					{
-						ReadDuration(in token, in parent.currentTiming, ref path);
+						ReadDuration(parent.timingChanges.Last.Value, in token, ref path);
 						break;
 					}
 
@@ -157,7 +157,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 
 		// REFERENCE: https://w.atwiki.jp/simai/pages/25.html#id_3afb985d
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static void ReadDuration(in Token token, in TimingChange timing, ref SlidePath path)
+		private static void ReadDuration(TimingChange timing, in Token token, ref SlidePath path)
 		{
 			var startOfDurationDeclaration = 0;
 			var overrideTiming             = timing;

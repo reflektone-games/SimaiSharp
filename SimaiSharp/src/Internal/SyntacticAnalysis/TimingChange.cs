@@ -1,7 +1,8 @@
 namespace SimaiSharp.Internal.SyntacticAnalysis
 {
-	internal struct TimingChange
+	public struct TimingChange
 	{
+		public float time;
 		public float tempo;
 		public float subdivisions;
 
@@ -12,7 +13,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 
 		public float SecondsPerBeat => SecondsPerBar / ((subdivisions == 0 ? 4 : subdivisions) / 4);
 
-		public void ExplicitOverride(float value)
+		public void SetSeconds(float value)
 		{
 			tempo        = 60f / value;
 			subdivisions = 4;

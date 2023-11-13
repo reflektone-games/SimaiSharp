@@ -11,22 +11,22 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 {
 	internal sealed class Deserializer : IDisposable
 	{
-		private readonly  MaiChart           _chart = new();
+		private readonly MaiChart _chart = new();
 		internal readonly IEnumerator<Token> enumerator;
 
-		private  float           _maxFinishTime;
-		private  float           _currentTime;
+		internal readonly LinkedList<TimingChange> timingChanges = new();
+		private float _maxFinishTime;
+		internal float currentTime;
 		internal NoteCollection? currentNoteCollection;
-		internal TimingChange    currentTiming;
-		internal bool            endOfFile;
+		internal bool endOfFile;
 
 		public Deserializer(IEnumerable<Token> sequence)
 		{
-			enumerator            = sequence.GetEnumerator();
-			currentTiming         = new TimingChange();
+			enumerator = sequence.GetEnumerator();
+			timingChanges.AddFirst(new TimingChange());
 			currentNoteCollection = null;
-			_currentTime          = 0;
-			endOfFile             = false;
+			currentTime = 0;
+			endOfFile = false;
 		}
 
 		public void Dispose()
@@ -62,7 +62,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 					}
 					case TokenType.Location:
 					{
-						currentNoteCollection ??= new NoteCollection(_currentTime);
+						currentNoteCollection ??= new NoteCollection(currentTime);
 
 						if (token.lexeme.Span[0] == '0')
 						{
@@ -86,7 +86,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 							currentNoteCollection = null;
 						}
 
-						_currentTime += currentTiming.SecondsPerBeat;
+						currentTime += timingChanges.Last.Value.SecondsPerBeat;
 					}
 						break;
 					case TokenType.EachDivider:
@@ -105,19 +105,19 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 						break;
 					case TokenType.Decorator:
 						throw new ScopeMismatchException(token.line, token.character,
-						                                 ScopeMismatchException.ScopeType.Note);
+														 ScopeMismatchException.ScopeType.Note);
 					case TokenType.Slide:
 						throw new ScopeMismatchException(token.line, token.character,
-						                                 ScopeMismatchException.ScopeType.Note);
+														 ScopeMismatchException.ScopeType.Note);
 					case TokenType.Duration:
 						throw new ScopeMismatchException(token.line, token.character,
-						                                 ScopeMismatchException.ScopeType.Note |
-						                                 ScopeMismatchException.ScopeType.Slide);
+														 ScopeMismatchException.ScopeType.Note |
+														 ScopeMismatchException.ScopeType.Slide);
 					case TokenType.SlideJoiner:
 						throw new ScopeMismatchException(token.line, token.character,
-						                                 ScopeMismatchException.ScopeType.Slide);
+														 ScopeMismatchException.ScopeType.Slide);
 					case TokenType.EndOfFile:
-						_chart.FinishTiming = _currentTime;
+						_chart.FinishTiming = currentTime;
 						break;
 					case TokenType.None:
 						break;
@@ -135,6 +135,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 			}
 
 			_chart.NoteCollections = noteCollections.ToArray();
+			_chart.TimingChanges = timingChanges.ToArray();
 
 			return _chart;
 		}
@@ -144,8 +145,8 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 		/// <param name="direction">1: Right; -1: Left; Default: Shortest route.</param>
 		/// <returns>The recommended ring type</returns>
 		internal static SlideType DetermineRingType(Location startLocation,
-		                                            Location endLocation,
-		                                            int      direction = 0)
+													Location endLocation,
+													int direction = 0)
 		{
 			switch (direction)
 			{
@@ -157,8 +158,9 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 				{
 					var difference = endLocation.index - startLocation.index;
 
-					var rotation = difference >= 0 ? difference > 4 ? -1 : 1 :
-					               difference < -4 ? 1 : -1;
+					var rotation = difference >= 0
+									   ? difference > 4 ? -1 : 1
+									   : difference < -4 ? 1 : -1;
 
 					return rotation > 0 ? SlideType.RingCw : SlideType.RingCcw;
 				}
@@ -169,8 +171,8 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 		{
 			var isSensor = token.lexeme.Span[0] is >= 'A' and <= 'E';
 			var indexRange = isSensor
-				                 ? token.lexeme.Span[1..]
-				                 : token.lexeme.Span[..];
+								 ? token.lexeme.Span[1..]
+								 : token.lexeme.Span[..];
 
 			var group = NoteGroup.Tap;
 
