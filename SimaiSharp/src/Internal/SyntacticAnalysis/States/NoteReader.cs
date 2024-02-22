@@ -133,7 +133,9 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 			if (note.type != NoteType.Break)
 				note.type = NoteType.Hold;
 
-			if (token.lexeme.Span[0] == '#')
+			var indexOfHash = token.lexeme.Span.IndexOf('#');
+
+			if (indexOfHash == 0)
 			{
 				if (!float.TryParse(token.lexeme.Span[1..],
 									NumberStyles.Any,
@@ -145,8 +147,19 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 				return;
 			}
 
+			if (indexOfHash != -1)
+			{
+				if (!float.TryParse(token.lexeme.Span[..indexOfHash],
+									NumberStyles.Any,
+									CultureInfo.InvariantCulture,
+									out var tempo))
+					throw new UnexpectedCharacterException(token.line, token.character + 1, "0~9, or \".\"");
+
+				timing.tempo = tempo;
+			}
+
 			var indexOfSeparator = token.lexeme.Span.IndexOf(':');
-			if (!float.TryParse(token.lexeme.Span[..indexOfSeparator],
+			if (!float.TryParse(token.lexeme.Span[(indexOfHash + 1)..indexOfSeparator],
 								NumberStyles.Any,
 								CultureInfo.InvariantCulture,
 								out var nominator))
