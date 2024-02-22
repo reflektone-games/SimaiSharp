@@ -6,7 +6,7 @@ using System.Linq;
 namespace SimaiSharp.Structures
 {
 	[Serializable]
-	public struct Note
+	public class Note
 	{
 		[NonSerialized] public NoteCollection parentCollection;
 

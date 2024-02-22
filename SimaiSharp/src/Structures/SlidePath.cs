@@ -5,7 +5,7 @@ using System.IO;
 namespace SimaiSharp.Structures
 {
 	[Serializable]
-	public struct SlidePath
+	public class SlidePath
 	{
 		public Location           startLocation;
 		public List<SlideSegment> segments;

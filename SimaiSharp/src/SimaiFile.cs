@@ -65,7 +65,7 @@ namespace SimaiSharp
 				{
 					if (currentKey != string.Empty)
 					{
-						yield return new KeyValuePair<string, string>(currentKey, currentValue.ToString().Trim());
+						yield return new KeyValuePair<string, string>(currentKey, currentValue.ToString().TrimEnd());
 						currentValue.Clear();
 					}
 
@@ -80,12 +80,13 @@ namespace SimaiSharp
 			}
 
 			// Add the last entry
-			yield return new KeyValuePair<string, string>(currentKey, currentValue.ToString().Trim());
+			yield return new KeyValuePair<string, string>(currentKey, currentValue.ToString().TrimEnd());
 		}
 
 		public string GetValue(string key)
 		{
-			return ToKeyValuePairs().FirstOrDefault(parameterPair => parameterPair.Key == key).Value;
+			return ToKeyValuePairs()
+				   .FirstOrDefault(parameterPair => parameterPair.Key == key).Value;
 		}
 
 		public void Dispose()

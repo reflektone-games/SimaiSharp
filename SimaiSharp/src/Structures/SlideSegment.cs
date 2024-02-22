@@ -4,7 +4,7 @@ using System.IO;
 
 namespace SimaiSharp.Structures
 {
-	public struct SlideSegment
+	public class SlideSegment
 	{
 		/// <summary>
 		///     Describes the target buttons
