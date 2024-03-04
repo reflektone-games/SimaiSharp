@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
 using SimaiSharp.Internal;
 
@@ -65,7 +64,7 @@ namespace SimaiSharp
 				{
 					if (currentKey != string.Empty)
 					{
-						yield return new KeyValuePair<string, string>(currentKey, currentValue.ToString().TrimEnd());
+						yield return new KeyValuePair<string, string>(currentKey, currentValue.ToString());
 						currentValue.Clear();
 					}
 
@@ -80,13 +79,41 @@ namespace SimaiSharp
 			}
 
 			// Add the last entry
-			yield return new KeyValuePair<string, string>(currentKey, currentValue.ToString().TrimEnd());
+			yield return new KeyValuePair<string, string>(currentKey, currentValue.ToString());
 		}
 
-		public string GetValue(string key)
+		public string? GetValue(string key)
 		{
-			return ToKeyValuePairs()
-				   .FirstOrDefault(parameterPair => parameterPair.Key == key).Value;
+			var keyPart       = $"&{key}=";
+			var keyPartLength = keyPart.Length;
+
+			var result       = new StringBuilder();
+			var readingValue = false;
+
+			while (!_simaiReader.EndOfStream)
+			{
+				var line = _simaiReader.ReadLine();
+
+				if (line == null)
+					break;
+
+				if (line.StartsWith('&'))
+				{
+					if (readingValue)
+						return result.ToString();
+
+					// https://stackoverflow.com/questions/3120056/contains-is-faster-than-startswith
+					if (!line.StartsWith(keyPart, StringComparison.OrdinalIgnoreCase))
+						continue;
+
+					readingValue = true;
+					result.AppendLine(line[keyPartLength..]);
+				}
+				else if (readingValue)
+					result.AppendLine(line);
+			}
+
+			return readingValue ? result.ToString() : null;
 		}
 
 		public void Dispose()
