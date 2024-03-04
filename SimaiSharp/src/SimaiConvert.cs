@@ -6,6 +6,9 @@ using SimaiSharp.Structures;
 
 namespace SimaiSharp
 {
+	/// <summary>
+	/// Handles simai chart conversion to and from different formats
+	/// </summary>
 	public static class SimaiConvert
 	{
 		public static MaiChart Deserialize(string value)
