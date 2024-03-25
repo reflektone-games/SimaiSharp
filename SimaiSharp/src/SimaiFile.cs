@@ -73,7 +73,7 @@ namespace SimaiSharp
                 {
                     if (currentKey != string.Empty)
                     {
-                        yield return new KeyValuePair<string, string>(currentKey, currentValue.ToString());
+                        yield return new KeyValuePair<string, string>(currentKey, currentValue.ToString().TrimEnd());
                         currentValue.Clear();
                     }
 
@@ -88,7 +88,7 @@ namespace SimaiSharp
             }
 
             // Add the last entry
-            yield return new KeyValuePair<string, string>(currentKey, currentValue.ToString());
+            yield return new KeyValuePair<string, string>(currentKey, currentValue.ToString().TrimEnd());
         }
 
         public string? GetValue(string key)
@@ -109,7 +109,7 @@ namespace SimaiSharp
                 if (line.StartsWith('&'))
                 {
                     if (readingValue)
-                        return result.ToString();
+                        return result.ToString().TrimEnd();
 
                     // https://stackoverflow.com/questions/3120056/contains-is-faster-than-startswith
                     if (!line.StartsWith(keyPart, StringComparison.OrdinalIgnoreCase))
@@ -122,7 +122,7 @@ namespace SimaiSharp
                     result.AppendLine(line);
             }
 
-            return readingValue ? result.ToString() : null;
+            return readingValue ? result.ToString().TrimEnd() : null;
         }
 
         public void Dispose()
