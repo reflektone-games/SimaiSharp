@@ -104,7 +104,8 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 					path.type = NoteType.Break;
 					return;
 				default:
-					throw new UnsupportedSyntaxException(token.line, token.character);
+					// throw new UnsupportedSyntaxException(token.line, token.character);
+					return;
 			}
 		}
 
