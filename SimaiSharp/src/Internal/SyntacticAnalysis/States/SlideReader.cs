@@ -191,7 +191,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 				}
 			}
 
-			var durationDeclaration = token.lexeme.Span[startOfDurationDeclaration..];
+			var durationDeclaration = token.lexeme.Span[startOfDurationDeclaration..].ToString().Replace(" ", "");
 			var indexOfSeparator    = durationDeclaration.IndexOf(':');
 
 			// Slide duration:
