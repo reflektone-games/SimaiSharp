@@ -59,6 +59,8 @@ namespace SimaiSharp
 
         public IEnumerable<KeyValuePair<string, string>> ToKeyValuePairs()
         {
+            _simaiReader.BaseStream.Position = 0;
+
             var currentKey   = string.Empty;
             var currentValue = new StringBuilder();
 
@@ -93,6 +95,8 @@ namespace SimaiSharp
 
         public string? GetValue(string key)
         {
+            _simaiReader.BaseStream.Position = 0;
+
             var keyPart       = $"&{key}=";
             var keyPartLength = keyPart.Length;
 
