@@ -104,7 +104,8 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 					path.type = NoteType.Break;
 					return;
 				default:
-					throw new UnsupportedSyntaxException(token.line, token.character);
+					// throw new UnsupportedSyntaxException(token.line, token.character);
+					return;
 			}
 		}
 
@@ -190,7 +191,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 				}
 			}
 
-			var durationDeclaration = token.lexeme.Span[startOfDurationDeclaration..];
+			var durationDeclaration = token.lexeme.Span[startOfDurationDeclaration..].ToString().Replace(" ", "");
 			var indexOfSeparator    = durationDeclaration.IndexOf(':');
 
 			// Slide duration:
