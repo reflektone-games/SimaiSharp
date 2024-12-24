@@ -136,7 +136,8 @@ namespace SimaiSharp.Internal.LexicalAnalysis
                 }
 
                 default:
-                    throw new UnsupportedSyntaxException(_line, _charIndex);
+                    // throw new UnsupportedSyntaxException(_line, _charIndex);
+                    return null;
             }
         }
 
