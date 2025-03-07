@@ -6,7 +6,6 @@ using System.Text;
 using SimaiSharp.ErrorHandling;
 using SimaiSharp.Structures;
 using SimaiSharp.Utilities;
-using FormatException = System.FormatException;
 
 namespace SimaiSharp
 {
@@ -262,7 +261,7 @@ namespace SimaiSharp
             }
             else if (hashIndex != -1)
             {
-                if (!TryParseFloat(bytes[startInclusive..(hashIndex - 1)], out var localTempo))
+                if (!TryParseFloat(bytes[startInclusive..hashIndex], out var localTempo))
                     ThrowContext<TypeMismatchException>();
 
                 tempo.tempo    = localTempo;
@@ -272,7 +271,7 @@ namespace SimaiSharp
             if (colonIndex == -1)
                 ThrowContext<ChartFormatException>(startInclusive);
 
-            if (!TryParseFloat(bytes[startInclusive..(colonIndex - 1)], out var nominator))
+            if (!TryParseFloat(bytes[startInclusive..colonIndex], out var nominator))
                 ThrowContext<TypeMismatchException>(startInclusive);
 
             if (!TryParseFloat(bytes[(colonIndex + 1)..(currentIndex - 1)], out var denominator))
@@ -281,9 +280,101 @@ namespace SimaiSharp
             note.length = tempo.SecondsPerBar / (nominator / 4) * denominator;
         }
 
+        /// <summary>
+        /// https://w.atwiki.jp/simai/pages/25.html#id_3afb985d
+        /// </summary>
         private static void ConsumeSlideDuration(Span<byte> bytes, ref SlidePath slidePath)
         {
-            throw new NotImplementedException();
+            byte currentByte;
+            var  startInclusive = currentIndex;
+            var  hashIndex      = 0;
+            var  hashCount      = 0;
+            var  colonIndex     = -1;
+            var  tempo          = currentTempo;
+
+            do
+            {
+                currentByte = MoveNext(bytes);
+
+                switch (currentByte)
+                {
+                    case HashChar:
+                        if (hashCount == 0)
+                            hashIndex = currentIndex - 1;
+                        hashCount++;
+                        break;
+                    case ColonChar:
+                        colonIndex = currentIndex - 1;
+                        break;
+                }
+            } while (currentByte != DurationBracketClose);
+
+            switch (hashCount)
+            {
+                // [3##1.5]
+                case 2:
+                {
+                    if (!TryParseFloat(bytes[startInclusive..hashIndex], out var delay))
+                        ThrowContext<TypeMismatchException>();
+
+                    if (!TryParseFloat(bytes[(hashIndex + hashCount)..(currentIndex - 1)], out var duration))
+                        ThrowContext<TypeMismatchException>(startInclusive);
+
+                    if (slidePath.segmentTypes.Count == 0)
+                        slidePath.delay += delay;
+
+                    slidePath.duration += duration;
+                    break;
+                }
+                // [160#2]
+                case 1 when colonIndex == -1:
+                {
+                    if (!TryParseFloat(bytes[startInclusive..hashIndex], out var result))
+                        ThrowContext<TypeMismatchException>();
+
+                    tempo.tempo = result;
+                    break;
+                }
+                // [160#8:3]
+                case 1:
+                {
+                    if (!TryParseFloat(bytes[startInclusive..hashIndex], out var result))
+                        ThrowContext<TypeMismatchException>();
+
+                    tempo.tempo = result;
+
+                    if (!TryParseFloat(bytes[(hashIndex + hashCount)..colonIndex], out var nominator))
+                        ThrowContext<TypeMismatchException>(startInclusive);
+
+                    if (!TryParseFloat(bytes[(colonIndex + 1)..(currentIndex - 1)], out var denominator))
+                        ThrowContext<TypeMismatchException>(colonIndex + 1);
+
+                    if (slidePath.segmentTypes.Count == 0)
+                        slidePath.delay = tempo.SecondsPerBar;
+                    slidePath.duration += tempo.SecondsPerBar / (nominator / 4) * denominator;
+                    break;
+                }
+                // [8:3]
+                case 0 when colonIndex != -1:
+                {
+                    if (!TryParseFloat(bytes[..colonIndex], out var nominator))
+                        ThrowContext<TypeMismatchException>(startInclusive);
+
+                    if (!TryParseFloat(bytes[(colonIndex + 1)..(currentIndex - 1)], out var denominator))
+                        ThrowContext<TypeMismatchException>(colonIndex + 1);
+
+                    if (slidePath.segmentTypes.Count == 0)
+                        slidePath.delay = tempo.SecondsPerBar;
+                    slidePath.duration += tempo.SecondsPerBar / (nominator / 4) * denominator;
+                    break;
+                }
+                default:
+                {
+                    if (colonIndex == -1)
+                        ThrowContext<ChartFormatException>(startInclusive);
+                    break;
+                }
+            }
         }
 
         private static void ConsumeTempo(Span<byte> bytes)
