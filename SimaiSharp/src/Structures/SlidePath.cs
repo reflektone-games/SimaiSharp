@@ -1,42 +1,33 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
+using SimaiSharp.Utilities;
 
 namespace SimaiSharp.Structures
 {
-	[Serializable]
-	public class SlidePath
-	{
-		public Location           startLocation;
-		public List<SlideSegment> segments;
+    [Serializable]
+    public struct SlidePath
+    {
+        /// <summary>
+        /// The intro delay of a slide before it starts moving.
+        /// </summary>
+        public float delay;
 
-		/// <summary>
-		///     The intro delay of a slide before it starts moving.
-		/// </summary>
-		public float delay;
+        public float duration;
 
-		public float duration;
+        /// <summary>
+        /// True if this slide path doesn't fade and scale up the star indicator during the delay.
+        /// </summary>
+        public bool noIntroAnimation;
 
-		public NoteType type;
+        /// <summary>
+        /// The locations of this slide path, represented in hexadecimal.
+        /// </summary>
+        /// <example>0x01 == Button 1</example>
+        /// <example>0xA1 == Touch A1</example>
+        /// <example>0xC0 == Touch C</example>
+        /// <remarks>Use <see cref="LocationUtilities"/> to get the index and group.</remarks>
+        public List<int> vertices;
 
-		public SlidePath(List<SlideSegment> segments)
-		{
-			this.segments = segments;
-			startLocation = default;
-			delay         = 0;
-			duration      = 0;
-			type          = NoteType.Slide;
-		}
-
-		public void WriteTo(StringWriter writer)
-		{
-			foreach (var segment in segments)
-				segment.WriteTo(writer, startLocation);
-
-			if (type == NoteType.Break)
-				writer.Write('b');
-
-			writer.Write($"[{delay:0.0000000}##{duration:0.0000000}]");
-		}
-	}
+        public List<SlideType> segmentTypes;
+    }
 }

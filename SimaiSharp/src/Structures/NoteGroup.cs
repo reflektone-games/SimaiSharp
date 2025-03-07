@@ -1,6 +1,6 @@
 namespace SimaiSharp.Structures
 {
-	public enum NoteGroup
+	public enum NoteGroup : byte
 	{
 		Tap     = 0,
 		ASensor = 1,

@@ -5,121 +5,140 @@ namespace SimaiSharp.Tests;
 [TestFixture]
 public class SimaiChartTests
 {
-	[Test]
-	public void CanReadEmptyChart()
-	{
-		const string maidataFilePath = @"./Resources/SimaiChartTests/CanReadEmptyChart.txt";
-		const string chartKey        = @"inote_1";
+    [Test]
+    public void CanReadEmptyChart()
+    {
+        const string maidataFilePath = @"./Resources/SimaiChartTests/CanReadEmptyChart.txt";
+        const string chartKey        = @"inote_1";
 
-		using var simaiFile = new SimaiFile(maidataFilePath);
-		var       chart     = SimaiConvert.Deserialize(simaiFile.GetValue(chartKey));
+        using var simaiFile = new SimaiFile(maidataFilePath);
+        if (simaiFile.TryGetValueSpan(chartKey, out var chartSpan))
+        {
+            var chart = SimaiConvert.Deserialize(chartSpan);
+            Assert.That(chart.noteFrames, Is.Empty);
+        }
+    }
 
-		Assert.That(chart.NoteCollections, Is.Empty);
-	}
+    [Test]
+    public void CanReadSingularLocation()
+    {
+        const string maidataFilePath = @"./Resources/SimaiChartTests/CanReadSingularLocation.txt";
+        const string chartKey        = @"inote_1";
 
-	[Test]
-	public void CanReadSingularLocation()
-	{
-		const string maidataFilePath = @"./Resources/SimaiChartTests/CanReadSingularLocation.txt";
-		const string chartKey        = @"inote_1";
+        using var simaiFile = new SimaiFile(maidataFilePath);
+        if (simaiFile.TryGetValueSpan(chartKey, out var chartSpan))
+        {
+            var chart = SimaiConvert.Deserialize(chartSpan);
+            Assert.That(chart.noteFrames,          Has.Count.EqualTo(1));
+            Assert.That(chart.noteFrames[0].Notes, Has.Count.EqualTo(1));
+            Assert.That(chart.noteFrames[0].Notes[0].location is 0x00);
+        }
+    }
 
-		using var simaiFile = new SimaiFile(new FileInfo(maidataFilePath));
-		var       chart     = SimaiConvert.Deserialize(simaiFile.GetValue(chartKey));
+    [Test]
+    public void CanReadLocationsWithSeparators()
+    {
+        const string maidataFilePath = @"./Resources/SimaiChartTests/CanReadLocationsWithSeparators.txt";
+        const string chartKey        = @"inote_1";
 
-		Assert.That(chart.NoteCollections,    Has.Length.EqualTo(1));
-		Assert.That(chart.NoteCollections[0], Has.Count.EqualTo(1));
-		Assert.That(chart.NoteCollections[0][0].location is { group: NoteGroup.Tap, index: 0 });
-	}
+        using var simaiFile = new SimaiFile(maidataFilePath);
+        if (simaiFile.TryGetValueSpan(chartKey, out var chartSpan))
+        {
+            var chart = SimaiConvert.Deserialize(chartSpan);
+            Assert.That(chart.noteFrames,          Has.Count.EqualTo(1));
+            Assert.That(chart.noteFrames[0].Notes, Has.Count.EqualTo(8));
+            Assert.Multiple(() =>
+            {
+                Assert.That(chart.noteFrames[0].Notes[0].location, Is.EqualTo(0x00));
+                Assert.That(chart.noteFrames[0].Notes[1].location, Is.EqualTo(0x01));
+                Assert.That(chart.noteFrames[0].Notes[2].location, Is.EqualTo(0x02));
+                Assert.That(chart.noteFrames[0].Notes[3].location, Is.EqualTo(0x03));
+                Assert.That(chart.noteFrames[0].Notes[4].location, Is.EqualTo(0x04));
+                Assert.That(chart.noteFrames[0].Notes[5].location, Is.EqualTo(0x05));
+                Assert.That(chart.noteFrames[0].Notes[6].location, Is.EqualTo(0x06));
+                Assert.That(chart.noteFrames[0].Notes[7].location, Is.EqualTo(0x07));
+            });
+        }
+    }
 
-	[Test]
-	public void CanReadLocationsWithSeparators()
-	{
-		const string maidataFilePath = @"./Resources/SimaiChartTests/CanReadLocationsWithSeparators.txt";
-		const string chartKey        = @"inote_1";
+    [Test]
+    public void CanReadLocationsWithoutSeparators()
+    {
+        const string maidataFilePath = @"./Resources/SimaiChartTests/CanReadLocationsWithoutSeparators.txt";
+        const string chartKey        = @"inote_1";
 
-		using var simaiFile = new SimaiFile(new FileInfo(maidataFilePath));
-		var       chart     = SimaiConvert.Deserialize(simaiFile.GetValue(chartKey));
+        using var simaiFile = new SimaiFile(maidataFilePath);
 
-		Assert.That(chart.NoteCollections,    Has.Length.EqualTo(1));
-		Assert.That(chart.NoteCollections[0], Has.Count.EqualTo(8));
-		Assert.Multiple(() =>
-		{
-			Assert.That(chart.NoteCollections[0][0].location is { group: NoteGroup.Tap, index: 0 });
-			Assert.That(chart.NoteCollections[0][1].location is { group: NoteGroup.Tap, index: 1 });
-			Assert.That(chart.NoteCollections[0][2].location is { group: NoteGroup.Tap, index: 2 });
-			Assert.That(chart.NoteCollections[0][3].location is { group: NoteGroup.Tap, index: 3 });
-			Assert.That(chart.NoteCollections[0][4].location is { group: NoteGroup.Tap, index: 4 });
-			Assert.That(chart.NoteCollections[0][5].location is { group: NoteGroup.Tap, index: 5 });
-			Assert.That(chart.NoteCollections[0][6].location is { group: NoteGroup.Tap, index: 6 });
-			Assert.That(chart.NoteCollections[0][7].location is { group: NoteGroup.Tap, index: 7 });
-		});
-	}
+        if (simaiFile.TryGetValueSpan(chartKey, out var chartSpan))
+        {
+            var chart = SimaiConvert.Deserialize(chartSpan);
 
-	[Test]
-	public void CanReadLocationsWithoutSeparators()
-	{
-		const string maidataFilePath = @"./Resources/SimaiChartTests/CanReadLocationsWithoutSeparators.txt";
-		const string chartKey        = @"inote_1";
+            Assert.That(chart.noteFrames,          Has.Count.EqualTo(1));
+            Assert.That(chart.noteFrames[0].Notes, Has.Count.EqualTo(8));
+            Assert.Multiple(() =>
+            {
+                Assert.That(chart.noteFrames[0].Notes[0].location, Is.EqualTo(0x00));
+                Assert.That(chart.noteFrames[0].Notes[1].location, Is.EqualTo(0x01));
+                Assert.That(chart.noteFrames[0].Notes[2].location, Is.EqualTo(0x02));
+                Assert.That(chart.noteFrames[0].Notes[3].location, Is.EqualTo(0x03));
+                Assert.That(chart.noteFrames[0].Notes[4].location, Is.EqualTo(0x04));
+                Assert.That(chart.noteFrames[0].Notes[5].location, Is.EqualTo(0x05));
+                Assert.That(chart.noteFrames[0].Notes[6].location, Is.EqualTo(0x06));
+                Assert.That(chart.noteFrames[0].Notes[7].location, Is.EqualTo(0x07));
+            });
+        }
+    }
 
-		using var simaiFile = new SimaiFile(new FileInfo(maidataFilePath));
-		var       chart     = SimaiConvert.Deserialize(simaiFile.GetValue(chartKey));
+    [Test]
+    public void CanReadTempoWithDefaultSubdivisions()
+    {
+        const string maidataFilePath = @"./Resources/SimaiChartTests/CanReadTempoWithDefaultSubdivisions.txt";
+        const string chartKey        = @"inote_1";
 
-		Assert.That(chart.NoteCollections,    Has.Length.EqualTo(1));
-		Assert.That(chart.NoteCollections[0], Has.Count.EqualTo(8));
-		Assert.Multiple(() =>
-		{
-			Assert.That(chart.NoteCollections[0][0].location is { group: NoteGroup.Tap, index: 0 });
-			Assert.That(chart.NoteCollections[0][1].location is { group: NoteGroup.Tap, index: 1 });
-			Assert.That(chart.NoteCollections[0][2].location is { group: NoteGroup.Tap, index: 2 });
-			Assert.That(chart.NoteCollections[0][3].location is { group: NoteGroup.Tap, index: 3 });
-			Assert.That(chart.NoteCollections[0][4].location is { group: NoteGroup.Tap, index: 4 });
-			Assert.That(chart.NoteCollections[0][5].location is { group: NoteGroup.Tap, index: 5 });
-			Assert.That(chart.NoteCollections[0][6].location is { group: NoteGroup.Tap, index: 6 });
-			Assert.That(chart.NoteCollections[0][7].location is { group: NoteGroup.Tap, index: 7 });
-		});
-	}
+        using var simaiFile = new SimaiFile(maidataFilePath);
+        if (simaiFile.TryGetValueSpan(chartKey, out var chartSpan))
+        {
+            var chart = SimaiConvert.Deserialize(chartSpan);
 
-	[Test]
-	public void CanReadTempoWithDefaultSubdivisions()
-	{
-		const string maidataFilePath = @"./Resources/SimaiChartTests/CanReadTempoWithDefaultSubdivisions.txt";
-		const string chartKey        = @"inote_1";
+            Assert.That(chart.noteFrames,         Has.Count.EqualTo(2));
+            Assert.That(chart.noteFrames[1].time, Is.EqualTo(1));
+        }
+    }
 
-		using var simaiFile = new SimaiFile(new FileInfo(maidataFilePath));
-		var       chart     = SimaiConvert.Deserialize(simaiFile.GetValue(chartKey));
+    [Test]
+    public void CanReadTempoChangesWithDefaultSubdivisions()
+    {
+        const string maidataFilePath = @"./Resources/SimaiChartTests/CanReadTempoChangesWithDefaultSubdivisions.txt";
+        const string chartKey        = @"inote_1";
 
-		Assert.That(chart.NoteCollections,         Has.Length.EqualTo(2));
-		Assert.That(chart.NoteCollections[1].time, Is.EqualTo(1));
-	}
+        using var simaiFile = new SimaiFile(maidataFilePath);
+        if (simaiFile.TryGetValueSpan(chartKey, out var chartSpan))
+        {
+            var chart = SimaiConvert.Deserialize(chartSpan);
 
-	[Test]
-	public void CanReadTempoChangesWithDefaultSubdivisions()
-	{
-		const string maidataFilePath = @"./Resources/SimaiChartTests/CanReadTempoChangesWithDefaultSubdivisions.txt";
-		const string chartKey        = @"inote_1";
+            Assert.That(chart.noteFrames, Has.Count.EqualTo(3));
+            Assert.Multiple(() =>
+            {
+                Assert.That(chart.noteFrames[1].time, Is.EqualTo(1));
+                Assert.That(chart.noteFrames[2].time, Is.EqualTo(1.5f));
+            });
+        }
+    }
 
-		using var simaiFile = new SimaiFile(new FileInfo(maidataFilePath));
-		var       chart     = SimaiConvert.Deserialize(simaiFile.GetValue(chartKey));
+    [Test]
+    public void CanSerialize()
+    {
+        const string maidataFilePath = @"./Resources/SimaiFileTests/0.txt";
+        const string chartKey        = @"inote_3";
 
-		Assert.That(chart.NoteCollections, Has.Length.EqualTo(3));
-		Assert.Multiple(() =>
-		{
-			Assert.That(chart.NoteCollections[1].time, Is.EqualTo(1));
-			Assert.That(chart.NoteCollections[2].time, Is.EqualTo(1.5f));
-		});
-	}
+        using var simaiFile = new SimaiFile(maidataFilePath);
+        if (simaiFile.TryGetValueSpan(chartKey, out var chartSpan))
+        {
+            var chart = SimaiConvert.Deserialize(chartSpan);
 
-	[Test]
-	public void CanSerialize()
-	{
-		const string maidataFilePath = @"./Resources/SimaiFileTests/0.txt";
-		const string chartKey        = @"inote_3";
-
-		using var simaiFile = new SimaiFile(new FileInfo(maidataFilePath));
-		var       chart     = SimaiConvert.Deserialize(simaiFile.GetValue(chartKey));
-
-		var serialized = SimaiConvert.Serialize(chart);
-		Console.WriteLine(serialized);
-		Assert.That(serialized, Is.Not.Empty);
-	}
+            var serialized = SimaiConvert.Serialize(chart);
+            Console.WriteLine(serialized);
+            Assert.That(serialized, Is.Not.Empty);
+        }
+    }
 }

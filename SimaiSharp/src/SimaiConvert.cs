@@ -1,31 +1,16 @@
-﻿using System.IO;
-using System.Text;
-using SimaiSharp.Internal.LexicalAnalysis;
-using SimaiSharp.Internal.SyntacticAnalysis;
+using System;
+using System.IO;
 using SimaiSharp.Structures;
 
 namespace SimaiSharp
 {
-	/// <summary>
-	/// Handles simai chart conversion to and from different formats
-	/// </summary>
-	public static class SimaiConvert
-	{
-		public static MaiChart Deserialize(string value)
-		{
-			var tokens = new Tokenizer(value).GetTokens();
-			var chart  = new Deserializer(tokens).GetChart();
+    public static class SimaiConvert
+    {
+        public static SimaiChart Deserialize(Span<byte> bytes) => SimaiDeserializer.Deserialize(bytes);
 
-			return chart;
-		}
-
-		public static string Serialize(MaiChart chart)
-		{
-			var serializer = new Serializer();
-			var stringBuilder = new StringBuilder();
-			using var stringWriter = new StringWriter(stringBuilder);
-			serializer.Serialize(chart, stringWriter);
-			return stringBuilder.ToString();
-		}
-	}
+        public static StreamWriter Serialize(SimaiChart chart)
+        {
+            throw new NotImplementedException();
+        }
+    }
 }

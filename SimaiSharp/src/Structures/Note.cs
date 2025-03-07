@@ -1,91 +1,44 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+using SimaiSharp.Utilities;
 
 namespace SimaiSharp.Structures
 {
-	[Serializable]
-	public class Note
-	{
-		[NonSerialized] public NoteCollection parentCollection;
+    [Serializable]
+    public struct Note
+    {
+        /// <summary>
+        /// The duration of this note, in seconds.
+        /// </summary>
+        public float length;
 
-		public Location       location;
-		public NoteStyles      styles;
-		public NoteAppearance appearance;
-		public NoteType       type;
+        /// <summary>
+        /// Groups multiple notes together.
+        /// Use this field to determine the color of the note, as well as drawing connectors between notes.
+        /// If this field is negative, then notes inside this group should always be displayed as "each" notes.
+        /// </summary>
+        public int eachGroup;
 
-		public float? length;
+        /// <summary>
+        /// What category this note should be counted as in results.
+        /// </summary>
+        public NoteCategory category;
 
-		public SlideMorph      slideMorph;
-		public List<SlidePath> slidePaths;
+        /// <summary>
+        /// Visual changes applied to this note.
+        /// </summary>
+        /// <remarks>
+        /// This doesn't affect the category nor its behavior.
+        /// Identify a note's behavior with <see cref="length"/>.
+        /// </remarks>
+        public NoteStyles styles;
 
-		public Note(NoteCollection parentCollection)
-		{
-			this.parentCollection = parentCollection;
-			slidePaths            = new List<SlidePath>();
-			location              = default;
-			styles                = NoteStyles.None;
-			appearance            = NoteAppearance.Default;
-			type                  = NoteType.Tap;
-			length                = null;
-			slideMorph            = SlideMorph.FadeIn;
-		}
-
-		public bool IsEx => (styles & NoteStyles.Ex) != 0;
-
-		public bool IsStar => appearance >= NoteAppearance.ForceStar ||
-		                      (slidePaths.Count > 0 && appearance is not NoteAppearance.ForceNormal);
-
-		public float GetVisibleDuration()
-		{
-			var baseValue = length ?? 0;
-
-			if (slidePaths is { Count: > 0 })
-				baseValue = slidePaths.Max(s => s.delay + s.duration);
-
-			return baseValue;
-		}
-
-		public void WriteTo(StringWriter writer)
-		{
-			writer.Write(location.ToString());
-
-			// decorations
-			if ((styles & NoteStyles.Ex) != 0)
-				writer.Write('x');
-
-			if ((styles & NoteStyles.Mine) != 0)
-				writer.Write('m');
-
-			// types
-			if (type == NoteType.ForceInvalidate)
-				writer.Write(slideMorph == SlideMorph.FadeIn ? '?' : '!');
-
-			switch (appearance)
-			{
-				case NoteAppearance.ForceNormal:
-					writer.Write('@');
-					break;
-				case NoteAppearance.ForceStarSpinning:
-					writer.Write("$$");
-					break;
-				case NoteAppearance.ForceStar:
-					writer.Write('$');
-					break;
-			}
-
-			if (length.HasValue)
-				writer.Write($"h[#{length.Value:0.0000000}]");
-
-			for (var i = 0; i < slidePaths.Count; i++)
-			{
-				if (i > 0)
-					writer.Write('*');
-
-				var slidePath = slidePaths[i];
-				slidePath.WriteTo(writer);
-			}
-		}
-	}
+        /// <summary>
+        /// The location of this note, represented in hexadecimal.
+        /// </summary>
+        /// <example>0x00 == Button 1</example>
+        /// <example>0xA1 == Touch A2</example>
+        /// <example>0xC0 == Touch C</example>
+        /// <remarks>Use <see cref="LocationUtilities"/> to get the index and group.</remarks>
+        public int location;
+    }
 }
