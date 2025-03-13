@@ -2,21 +2,14 @@ using System.Collections.Generic;
 
 namespace SimaiSharp.Structures
 {
-    public struct NoteFrame
+    public sealed class NoteFrame
     {
         public float time;
 
-        public readonly IReadOnlyList<Note>      Notes      => _notes;
-        public readonly IReadOnlyList<SlidePath> SlidePaths => _slidePaths;
+        public IReadOnlyList<Note>      Notes      => notes;
+        public IReadOnlyList<SlidePath> SlidePaths => slidePaths;
 
-        internal readonly List<Note>      _notes;
-        internal readonly List<SlidePath> _slidePaths;
-
-        public NoteFrame(float time)
-        {
-            _notes      = new List<Note>();
-            _slidePaths = new List<SlidePath>();
-            this.time   = time;
-        }
+        internal readonly List<Note>      notes      = new(2);
+        internal readonly List<SlidePath> slidePaths = new();
     }
 }

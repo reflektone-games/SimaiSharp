@@ -23,6 +23,8 @@ namespace SimaiSharp
         private static int currentNoteGroupIndex;
         private static int forceEachMultiplier;
 
+        private static bool _isEndOfFile;
+
         public static SimaiChart Deserialize(Span<byte> bytes)
         {
             currentIndex = 0;
@@ -36,14 +38,20 @@ namespace SimaiSharp
 
             currentNoteGroupIndex = 0;
 
+            _isEndOfFile = false;
+
             var chart = new SimaiChart
             {
                 noteFrames   = new List<NoteFrame>(),
                 tempoChanges = new List<TempoChange>()
             };
 
-            while (currentIndex < bytes.Length)
+            while (currentIndex < bytes.Length && !_isEndOfFile)
                 ConsumeNext(bytes, ref chart);
+
+            chart.finishTiming = currentTime;
+            FlushNoteFrame(chart);
+
             return chart;
         }
 
@@ -53,22 +61,12 @@ namespace SimaiSharp
 
             switch (currentByte)
             {
+                // A single E without any trailing numbers signify EOF
+                case SensorCharEndOrEof when PeekNext(bytes) is < ButtonCharStart or > ButtonCharEnd:
                 case SplitFrameChar:
-                    // Add any pending tempo changes
-                    // ReSharper disable once CompareOfFloatsByEqualityOperator
-                    if (chart.tempoChanges.Count == 0 || chart.tempoChanges[^1].time != currentTempo.time)
-                        chart.tempoChanges.Add(currentTempo);
-
-                    if (currentNoteFrame._notes.Count      != 0 ||
-                        currentNoteFrame._slidePaths.Count != 0)
-                    {
-                        chart.noteFrames.Add(currentNoteFrame);
-                        currentNoteFrame = new NoteFrame();
-                    }
-
-                    currentNoteGroupIndex =  0;
-                    forceEachMultiplier   =  1;
-                    currentTime           += currentTempo.SecondsPerBeat;
+                    if (currentByte == SensorCharEndOrEof)
+                        _isEndOfFile = true;
+                    FlushNoteFrame(chart);
                     break;
                 case TempoBracketOpen:
                     ConsumeTempo(bytes);
@@ -82,15 +80,46 @@ namespace SimaiSharp
                 case NewNoteGroupSeparatorChar:
                     currentNoteGroupIndex++;
                     break;
-                case >= ButtonCharStart and <= ButtonCharEnd or >= SensorCharStart and <= SensorCharEnd:
+                case >= ButtonCharStart and <= ButtonCharEnd or >= SensorCharStart and <= SensorCharEndOrEof:
                     ConsumeNote(bytes, currentByte, ref currentNoteFrame);
                     break;
+                case SeparatorChar:
+                case NullChar:
+                    break;
+                default:
+                    ThrowContext<UndefinedNotationException>();
+                    break;
             }
+        }
+
+        private static void FlushNoteFrame(SimaiChart chart)
+        {
+            // Add any pending tempo changes
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
+            if (chart.tempoChanges.Count == 0 || chart.tempoChanges[^1].time != currentTempo.time)
+                chart.tempoChanges.Add(currentTempo);
+
+            if (currentNoteFrame.notes.Count      != 0 ||
+                currentNoteFrame.slidePaths.Count != 0)
+            {
+                currentNoteFrame.notes.TrimExcess();
+                currentNoteFrame.slidePaths.TrimExcess();
+                currentNoteFrame.time = currentTime;
+                chart.noteFrames.Add(currentNoteFrame);
+                currentNoteFrame = new NoteFrame();
+            }
+
+            currentNoteGroupIndex =  0;
+            forceEachMultiplier   =  1;
+            currentTime           += currentTempo.SecondsPerBeat;
         }
 
         private static void ConsumeNote(Span<byte> bytes, byte currentByte, ref NoteFrame noteFrame)
         {
             var buttonLocation = ConsumeLocationDirect(bytes, currentByte);
+
+            if (_isEndOfFile)
+                ThrowContext<ChartFormatException>();
 
             var noteExists            = true;
             var forceTapStar          = false;
@@ -101,10 +130,12 @@ namespace SimaiSharp
                 eachGroup = currentNoteGroupIndex * forceEachMultiplier
             };
 
-            var slidePath = CreateNewSlidePath(noSlideIntroAnimation);
+            SlidePath? slidePath = null;
 
             for (;;)
             {
+                currentByte = MoveNext(bytes);
+
                 switch (currentByte)
                 {
                     #region Decorators
@@ -133,7 +164,7 @@ namespace SimaiSharp
                         noteExists            = false;
                         noSlideIntroAnimation = true;
 
-                        if (slidePath.segmentTypes.Count != 0)
+                        if (slidePath != null && slidePath.segmentTypes.Count != 0)
                             slidePath.noIntroAnimation = true;
                         break;
                     case ForceNormalChar:
@@ -148,14 +179,14 @@ namespace SimaiSharp
                     #endregion
 
                     case DurationBracketOpen:
-                        if (slidePath.segmentTypes.Count == 0)
-                            ConsumeNoteDuration(bytes, ref note);
-                        else ConsumeSlideDuration(bytes, ref slidePath);
+                        if (slidePath is { segmentTypes: { Count: 0 } })
+                            ConsumeSlideDuration(bytes, ref slidePath);
+                        else ConsumeNoteDuration(bytes, ref note);
                         break;
 
                     case NewSlideChar:
-                        if (slidePath.segmentTypes.Count != 0)
-                            noteFrame._slidePaths.Add(slidePath);
+                        if (slidePath != null && slidePath.segmentTypes.Count != 0)
+                            noteFrame.slidePaths.Add(slidePath);
                         slidePath = CreateNewSlidePath(noSlideIntroAnimation);
                         break;
 
@@ -171,19 +202,19 @@ namespace SimaiSharp
                     case ZigZagZChar:
                     case FanChar:
                         note.styles |= NoteStyles.Star;
+
+                        slidePath ??= CreateNewSlidePath(noSlideIntroAnimation);
                         ConsumeSlide(bytes, currentByte, ref slidePath);
                         break;
 
                     default:
                         // Resolve all pending data
-                        if (slidePath.segmentTypes.Count != 0)
-                            noteFrame._slidePaths.Add(slidePath);
+                        if (slidePath != null && slidePath.segmentTypes.Count != 0)
+                            noteFrame.slidePaths.Add(slidePath);
 
                         currentIndex--;
                         goto FINALIZE;
                 }
-
-                currentByte = MoveNext(bytes);
             }
 
         FINALIZE:
@@ -193,7 +224,7 @@ namespace SimaiSharp
             if (forceTapStar)
                 note.styles &= ~NoteStyles.Star;
 
-            noteFrame._notes.Add(note);
+            noteFrame.notes.Add(note);
             return;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -208,21 +239,29 @@ namespace SimaiSharp
         private static void ConsumeSlide(Span<byte>    bytes, byte currentByte,
                                          ref SlidePath slidePath)
         {
-            var targetLocation = ConsumeLocation(bytes, MoveNext(bytes));
+            var secondByte = MoveNext(bytes);
+            var targetLocation =
+                ConsumeLocation(bytes, secondByte is CurveCwChar or CurveCcwChar ? MoveNext(bytes) : secondByte);
+
+            if (_isEndOfFile)
+                ThrowContext<ChartFormatException>();
+
             var slideType = currentByte switch
             {
-                StraightLineChar  => SlideType.StraightLine,
-                RingRightChar     => FromRingRight(slidePath.vertices[^1]),
-                RingLeftChar      => FromRingLeft(slidePath.vertices[^1]),
-                RingAutoShortChar => FromRingShortest(slidePath.vertices[^1], targetLocation),
-                CurveCwChar       => SlideType.CurveCw,
-                CurveCcwChar      => SlideType.CurveCcw,
-                FoldChar          => SlideType.Fold,
-                EdgeFoldChar      => SlideType.EdgeFold,
-                ZigZagSChar       => SlideType.ZigZagS,
-                ZigZagZChar       => SlideType.ZigZagZ,
-                FanChar           => SlideType.Fan,
-                _                 => SlideType.StraightLine
+                StraightLineChar                             => SlideType.StraightLine,
+                RingRightChar                                => FromRingRight(slidePath.vertices[^1]),
+                RingLeftChar                                 => FromRingLeft(slidePath.vertices[^1]),
+                RingAutoShortChar                            => FromRingShortest(slidePath.vertices[^1], targetLocation),
+                CurveCwChar when secondByte is CurveCwChar   => SlideType.EdgeCurveCw,
+                CurveCwChar                                  => SlideType.CurveCw,
+                CurveCcwChar when secondByte is CurveCcwChar => SlideType.EdgeCurveCcw,
+                CurveCcwChar                                 => SlideType.CurveCcw,
+                FoldChar                                     => SlideType.Fold,
+                EdgeFoldChar                                 => SlideType.EdgeFold,
+                ZigZagSChar                                  => SlideType.ZigZagS,
+                ZigZagZChar                                  => SlideType.ZigZagZ,
+                FanChar                                      => SlideType.Fan,
+                _                                            => SlideType.StraightLine
             };
 
             slidePath.segmentTypes.Add(slideType);
@@ -240,6 +279,9 @@ namespace SimaiSharp
             do
             {
                 currentByte = MoveNext(bytes);
+
+                if (_isEndOfFile)
+                    ThrowContext<ChartFormatException>();
 
                 switch (currentByte)
                 {
@@ -295,6 +337,9 @@ namespace SimaiSharp
             do
             {
                 currentByte = MoveNext(bytes);
+
+                if (_isEndOfFile)
+                    ThrowContext<ChartFormatException>();
 
                 switch (currentByte)
                 {
@@ -357,7 +402,7 @@ namespace SimaiSharp
                 // [8:3]
                 case 0 when colonIndex != -1:
                 {
-                    if (!TryParseFloat(bytes[..colonIndex], out var nominator))
+                    if (!TryParseFloat(bytes[startInclusive..colonIndex], out var nominator))
                         ThrowContext<TypeMismatchException>(startInclusive);
 
                     if (!TryParseFloat(bytes[(colonIndex + 1)..(currentIndex - 1)], out var denominator))
@@ -384,6 +429,9 @@ namespace SimaiSharp
             do
             {
                 currentByte = MoveNext(bytes);
+
+                if (_isEndOfFile)
+                    ThrowContext<ChartFormatException>();
             } while (currentByte != TempoBracketClose);
 
             if (!TryParseFloat(bytes[startInclusive..(currentIndex - 1)], out var result))
@@ -401,6 +449,9 @@ namespace SimaiSharp
             // Consume the first char to see if we need to enable explicitTempoMode
             var currentByte = MoveNext(bytes);
 
+            if (_isEndOfFile)
+                ThrowContext<ChartFormatException>();
+
             if (currentByte == HashChar)
             {
                 explicitTempoMode = true;
@@ -410,6 +461,9 @@ namespace SimaiSharp
             do
             {
                 currentByte = MoveNext(bytes);
+
+                if (_isEndOfFile)
+                    ThrowContext<ChartFormatException>();
             } while (currentByte != SubdivisionBracketClose);
 
             if (!TryParseFloat(bytes[startInclusive..(currentIndex - 1)], out var result))
@@ -431,11 +485,11 @@ namespace SimaiSharp
 
         private static SlideType FromRingShortest(int startLocation, int endLocation)
         {
-            var difference = endLocation.ToNoteIndex() - startLocation.ToNoteIndex();
+            var difference = endLocation.ToIndex() - startLocation.ToIndex();
 
-            // -1 if the difference is greater than half a ring
             // Masking 0b111 makes negative values 8 - value.
-            // (Simai) 7^0 becomes 1, 7^1 becomes 2, 7^2 becomes 3, 7^3 becomes 4, etc.
+            // (Transforming the difference to be the clockwise distance)
+            // If the clockwise path is longer than half a ring (>=4), the sign bit will be 1
             var lesserThanHalfRingBit = ((difference & 0b0111) - 4) >> 31;
 
             // The bit manipulation calculates the CW path.
@@ -443,24 +497,29 @@ namespace SimaiSharp
             return (SlideType)(2 + lesserThanHalfRingBit);
         }
 
-        /// XOR Bit 1 and Bit 2 (0b010 and 0b100), this means the start location is in the bottom 4 buttons
+        /// XOR Bit 1 and Bit 2 (0b010 and 0b100), this means the start location is in the bottom four buttons
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static int IsBottomHalf(int buttonIndex) => ((buttonIndex >> 2) ^ (buttonIndex >> 1)) & 1;
+        private static int IsBottomHalf(int buttonIndex) => (buttonIndex >> 2) ^ ((buttonIndex >> 1) & 1);
 
         private static int ConsumeLocationDirect(Span<byte> bytes, byte currentByte)
         {
-            var buttonLocation = 0;
-            if (currentByte >= SensorCharStart)
-                buttonLocation = ((currentByte - SensorCharStart) << 4) + 0xa0;
+            if (currentByte < SensorCharStart)
+                return currentByte - ButtonCharStart;
 
-            currentByte    =  MoveNext(bytes);
+            var buttonLocation = ((currentByte - SensorCharStart) << 4) + 0xa0;
+
+            currentByte = MoveNext(bytes);
+
+            if (_isEndOfFile)
+                ThrowContext<ChartFormatException>();
+
             buttonLocation += currentByte - ButtonCharStart;
             return buttonLocation;
         }
 
         private static int ConsumeLocation(Span<byte> bytes, byte currentByte)
         {
-            if (currentByte is >= ButtonCharStart and <= ButtonCharEnd or >= SensorCharStart and <= SensorCharEnd)
+            if (currentByte is >= ButtonCharStart and <= ButtonCharEnd or >= SensorCharStart and <= SensorCharEndOrEof)
                 return ConsumeLocationDirect(bytes, currentByte);
 
             ThrowContext<TypeMismatchException>();
@@ -495,7 +554,15 @@ namespace SimaiSharp
             var  commentCharCount = 0;
             do
             {
+                if (currentIndex >= bytes.Length)
+                {
+                    _isEndOfFile = true;
+                    return 0;
+                }
+
+                // Reads the current index, then increment
                 currentByte = bytes[currentIndex++];
+                currentColumn++;
 
                 if (currentByte == '\n')
                 {
@@ -507,17 +574,22 @@ namespace SimaiSharp
 
                 if (currentByte == SingleLineCommentChar)
                     commentCharCount++;
-            } while ((currentByte is CarriageReturnChar or LineFeedChar or SingleLineCommentChar ||
-                      commentCharCount >= 2) &&
-                     currentIndex < bytes.Length);
+            } while (currentByte is CarriageReturnChar or LineFeedChar or SingleLineCommentChar ||
+                     commentCharCount >= 2);
 
             return currentByte;
         }
 
-        private static byte PeekNext(Span<byte> bytes) => bytes[currentIndex];
+        private static byte PeekNext(Span<byte> bytes)
+        {
+            if (currentIndex >= bytes.Length)
+                return 0;
+            return bytes[currentIndex];
+        }
 
         #region Constants
 
+        private const byte NullChar           = (byte)'\0';
         private const byte CarriageReturnChar = (byte)'\r';
         private const byte LineFeedChar       = (byte)'\n';
 
@@ -542,8 +614,8 @@ namespace SimaiSharp
         private const byte ButtonCharStart = (byte)'1';
         private const byte ButtonCharEnd   = (byte)'8';
 
-        private const byte SensorCharStart = (byte)'A';
-        private const byte SensorCharEnd   = (byte)'E';
+        private const byte SensorCharStart    = (byte)'A';
+        private const byte SensorCharEndOrEof = (byte)'E';
 
         private const byte FireworkChar        = (byte)'f';
         private const byte BreakChar           = (byte)'b';

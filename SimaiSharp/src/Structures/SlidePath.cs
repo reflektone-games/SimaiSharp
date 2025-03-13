@@ -5,7 +5,7 @@ using SimaiSharp.Utilities;
 namespace SimaiSharp.Structures
 {
     [Serializable]
-    public struct SlidePath
+    public class SlidePath
     {
         /// <summary>
         /// The intro delay of a slide before it starts moving.
@@ -26,8 +26,8 @@ namespace SimaiSharp.Structures
         /// <example>0xA1 == Touch A1</example>
         /// <example>0xC0 == Touch C</example>
         /// <remarks>Use <see cref="LocationUtilities"/> to get the index and group.</remarks>
-        public List<int> vertices;
+        public List<int> vertices = new();
 
-        public List<SlideType> segmentTypes;
+        public List<SlideType> segmentTypes = new();
     }
 }

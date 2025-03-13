@@ -4,10 +4,10 @@ using System.Collections.Generic;
 namespace SimaiSharp.Structures
 {
     [Serializable]
-    public struct SimaiChart
+    public class SimaiChart
     {
         public float             finishTiming;
-        public List<NoteFrame>   noteFrames;
-        public List<TempoChange> tempoChanges;
+        public List<NoteFrame>   noteFrames   = new();
+        public List<TempoChange> tempoChanges = new();
     }
 }
