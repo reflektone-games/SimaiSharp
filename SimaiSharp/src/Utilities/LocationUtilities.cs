@@ -11,5 +11,13 @@ namespace SimaiSharp.Utilities
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int ToNoteGroup(this int location) =>
             (location & 0xF0) >> 4;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsTap(this int location) =>
+            location.ToNoteGroup() == 0;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsTouch(this int location) =>
+            location.ToNoteGroup() != 0;
     }
 }
