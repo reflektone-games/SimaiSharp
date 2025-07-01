@@ -4,7 +4,7 @@ using SimaiSharp.Utilities;
 namespace SimaiSharp.Structures
 {
     [Serializable]
-    public struct Note
+    public sealed class Note
     {
         /// <summary>
         /// The duration of this note, in seconds.

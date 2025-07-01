@@ -15,7 +15,7 @@ namespace SimaiSharp
 
         private static float       currentTime;
         private static TempoChange currentTempo;
-        private static NoteFrame   currentNoteFrame;
+        private static NoteFrame   currentNoteFrame = null!;
 
         private static int currentLine   = 1;
         private static int currentColumn = 1;
@@ -95,8 +95,7 @@ namespace SimaiSharp
         private static void FlushNoteFrame(SimaiChart chart)
         {
             // Add any pending tempo changes
-            // ReSharper disable once CompareOfFloatsByEqualityOperator
-            if (chart.tempoChanges.Count == 0 || chart.tempoChanges[^1].time != currentTempo.time)
+            if (chart.tempoChanges.Count == 0 || Math.Abs(chart.tempoChanges[^1].time - currentTempo.time) > float.Epsilon)
                 chart.tempoChanges.Add(currentTempo);
 
             if (currentNoteFrame.notes.Count      != 0 ||
@@ -132,7 +131,7 @@ namespace SimaiSharp
 
             SlidePath? slidePath = null;
 
-            for (;;)
+            while (true)
             {
                 currentByte = MoveNext(bytes);
 

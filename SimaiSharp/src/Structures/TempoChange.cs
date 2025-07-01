@@ -7,7 +7,7 @@ namespace SimaiSharp.Structures
         public float subdivisions;
 
         /// <summary>
-        ///     Used in duration parsing.
+        /// Used in duration parsing.
         /// </summary>
         public float SecondsPerBar => tempo == 0 ? 0 : 60f / tempo;
 

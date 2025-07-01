@@ -7,6 +7,8 @@ namespace SimaiSharp.Structures
     [Serializable]
     public class SlidePath
     {
+        public bool isBreak;
+
         /// <summary>
         /// The intro delay of a slide before it starts moving.
         /// </summary>
