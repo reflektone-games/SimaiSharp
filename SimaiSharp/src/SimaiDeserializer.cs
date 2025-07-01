@@ -85,6 +85,7 @@ namespace SimaiSharp
                     break;
                 case SeparatorChar:
                 case NullChar:
+                case SpaceChar:
                     break;
                 default:
                     ThrowContext<UndefinedNotationException>();
@@ -143,7 +144,10 @@ namespace SimaiSharp
                         note.styles |= NoteStyles.Fireworks;
                         break;
                     case BreakChar:
-                        note.category = NoteCategory.Break;
+                        if (slidePath != null)
+                            slidePath.isBreak = true;
+                        else
+                            note.category = NoteCategory.Break;
                         break;
                     case ExChar:
                         note.styles |= NoteStyles.Ex;
@@ -588,6 +592,7 @@ namespace SimaiSharp
 
         #region Constants
 
+        private const byte SpaceChar          = (byte)' ';
         private const byte NullChar           = (byte)'\0';
         private const byte CarriageReturnChar = (byte)'\r';
         private const byte LineFeedChar       = (byte)'\n';
