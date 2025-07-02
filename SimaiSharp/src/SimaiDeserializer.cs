@@ -488,7 +488,7 @@ namespace SimaiSharp
 
         private static SlideType FromRingShortest(int startLocation, int endLocation)
         {
-            var difference = endLocation.ToIndex() - startLocation.ToIndex();
+            var difference = endLocation.ToNoteIndex() - startLocation.ToNoteIndex();
 
             // Masking 0b111 makes negative values 8 - value.
             // (Transforming the difference to be the clockwise distance)
