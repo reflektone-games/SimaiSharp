@@ -159,7 +159,7 @@ namespace SimaiSharp
                         noteExists            = false;
                         noSlideIntroAnimation = true;
 
-                        if (slidePath != null && slidePath.segmentTypes.Count != 0)
+                        if (slidePath != null && slidePath.segments.Count != 0)
                             slidePath.noIntroAnimation = true;
                         break;
                     case ForceNonStarChar:
@@ -174,13 +174,13 @@ namespace SimaiSharp
                     #endregion
 
                     case DurationBracketOpen:
-                        if (slidePath is { segmentTypes: { Count: 0 } })
+                        if (slidePath is { segments: { Count: 0 } })
                             ConsumeSlideDuration(bytes, ref slidePath);
                         else ConsumeNoteDuration(bytes, ref note);
                         break;
 
                     case NewSlideChar:
-                        if (slidePath != null && slidePath.segmentTypes.Count != 0)
+                        if (slidePath != null && slidePath.segments.Count != 0)
                             noteFrame.slidePaths.Add(slidePath);
                         slidePath = CreateNewSlidePath(noSlideIntroAnimation);
                         break;
@@ -204,7 +204,7 @@ namespace SimaiSharp
 
                     default:
                         // Resolve all pending data
-                        if (slidePath != null && slidePath.segmentTypes.Count != 0)
+                        if (slidePath != null && slidePath.segments.Count != 0)
                             noteFrame.slidePaths.Add(slidePath);
 
                         currentIndex--;
@@ -225,8 +225,6 @@ namespace SimaiSharp
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             SlidePath CreateNewSlidePath(bool noIntroAnimation) => new()
             {
-                segmentTypes     = new List<SlideType>(),
-                vertices         = new List<int> { buttonLocation },
                 noIntroAnimation = noIntroAnimation
             };
         }
@@ -259,7 +257,22 @@ namespace SimaiSharp
                 _                                            => SlideType.StraightLine
             };
 
-            slidePath.segmentTypes.Add(slideType);
+            slidePath.segments.Add(new SlideSegment
+            {
+                type       = slideType,
+                startIndex = slidePath.vertices.Count
+            });
+
+            slidePath.vertices.Add(targetLocation);
+
+            if (slideType != SlideType.EdgeFold)
+                return;
+
+            targetLocation = ConsumeLocation(bytes, MoveNext(bytes));
+
+            if (_isEndOfFile)
+                ThrowContext<ChartFormatException>();
+
             slidePath.vertices.Add(targetLocation);
         }
 
@@ -360,7 +373,7 @@ namespace SimaiSharp
                     if (!TryParseFloat(bytes[(hashIndex + hashCount)..(currentIndex - 1)], out var duration))
                         ThrowContext<TypeMismatchException>(startInclusive);
 
-                    if (slidePath.segmentTypes.Count == 0)
+                    if (slidePath.segments.Count == 0)
                         slidePath.delay += delay;
 
                     slidePath.duration += duration;
@@ -389,7 +402,7 @@ namespace SimaiSharp
                     if (!TryParseFloat(bytes[(colonIndex + 1)..(currentIndex - 1)], out var denominator))
                         ThrowContext<TypeMismatchException>(colonIndex + 1);
 
-                    if (slidePath.segmentTypes.Count == 0)
+                    if (slidePath.segments.Count == 0)
                         slidePath.delay = tempo.SecondsPerBar;
                     slidePath.duration += tempo.SecondsPerBar / (nominator / 4) * denominator;
                     break;
@@ -403,7 +416,7 @@ namespace SimaiSharp
                     if (!TryParseFloat(bytes[(colonIndex + 1)..(currentIndex - 1)], out var denominator))
                         ThrowContext<TypeMismatchException>(colonIndex + 1);
 
-                    if (slidePath.segmentTypes.Count == 0)
+                    if (slidePath.segments.Count == 0)
                         slidePath.delay = tempo.SecondsPerBar;
                     slidePath.duration += tempo.SecondsPerBar / (nominator / 4) * denominator;
                     break;
