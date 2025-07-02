@@ -21,9 +21,7 @@ namespace SimaiSharp
         }
 
         /// <returns>A boolean indicating whether to decode the value</returns>
-        public delegate bool OnKeyRead(string key);
-
-        public delegate void OnValueRead(string key, string value);
+        public delegate void OnEntryRead(string key, Span<byte> value);
 
         public Dictionary<int, MemorySlice> ParseFile()
         {
@@ -74,7 +72,7 @@ namespace SimaiSharp
             return entries;
         }
 
-        public void Enumerate(OnKeyRead onKeyRead, OnValueRead? onValueRead)
+        public void Enumerate(OnEntryRead onEntryRead)
         {
             var fileLength = _accessor.Capacity;
             var bytes      = new Span<byte>(_ptr, (int)fileLength);
@@ -83,7 +81,6 @@ namespace SimaiSharp
             long keyStart   = 0;
             long valueStart = 0;
             var  currentKey = string.Empty;
-            var  sendValue  = false;
             int  byteIndex;
 
             for (byteIndex = 0; byteIndex < fileLength; byteIndex++)
@@ -94,10 +91,8 @@ namespace SimaiSharp
                 {
                     case (byte)'&':
                     {
-                        if (sendValue && !string.IsNullOrEmpty(currentKey))
-                            onValueRead!.Invoke(
-                                currentKey,
-                                Encoding.UTF8.GetString(bytes.Slice((int)valueStart, (int)(byteIndex - valueStart))));
+                        if (!string.IsNullOrEmpty(currentKey))
+                            onEntryRead.Invoke(currentKey, bytes.Slice((int)valueStart, (int)(byteIndex - valueStart)));
 
                         readingKey = true;
                         currentKey = string.Empty;
@@ -109,8 +104,6 @@ namespace SimaiSharp
                     {
                         var keyLength = (int)(byteIndex - keyStart);
                         currentKey = Encoding.UTF8.GetString(bytes.Slice((int)keyStart, keyLength));
-                        sendValue  = onKeyRead.Invoke(currentKey);
-
                         valueStart = byteIndex + 1;
                         readingKey = false;
                         break;
@@ -122,9 +115,8 @@ namespace SimaiSharp
             }
 
         FINALIZE:
-            if (sendValue && !string.IsNullOrEmpty(currentKey))
-                onValueRead!.Invoke(
-                    currentKey, Encoding.UTF8.GetString(bytes.Slice((int)valueStart, (int)(byteIndex - valueStart))));
+            if (!string.IsNullOrEmpty(currentKey))
+                onEntryRead.Invoke(currentKey, bytes.Slice((int)valueStart, (int)(byteIndex - valueStart)));
         }
 
         public bool TryGetValueOnce(string key, out string value)
