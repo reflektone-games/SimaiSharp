@@ -12,13 +12,6 @@ namespace SimaiSharp.Structures
         public float length;
 
         /// <summary>
-        /// Groups multiple notes together.
-        /// Use this field to determine the color of the note, as well as drawing connectors between notes.
-        /// If this field is negative, then notes inside this group should always be displayed as "each" notes.
-        /// </summary>
-        public int eachGroup;
-
-        /// <summary>
         /// What category this note should be counted as in results.
         /// </summary>
         public NoteCategory category;

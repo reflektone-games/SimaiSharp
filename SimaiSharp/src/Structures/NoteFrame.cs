@@ -5,6 +5,7 @@ namespace SimaiSharp.Structures
     public sealed class NoteFrame
     {
         public float time;
+        public bool  isEach;
 
         public IReadOnlyList<Note>      Notes      => notes;
         public IReadOnlyList<SlidePath> SlidePaths => slidePaths;

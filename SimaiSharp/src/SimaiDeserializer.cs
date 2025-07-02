@@ -20,9 +20,6 @@ namespace SimaiSharp
         private static int currentLine   = 1;
         private static int currentColumn = 1;
 
-        private static int currentNoteGroupIndex;
-        private static int forceEachMultiplier;
-
         private static bool _isEndOfFile;
 
         public static SimaiChart Deserialize(Span<byte> bytes)
@@ -35,8 +32,6 @@ namespace SimaiSharp
 
             currentLine   = 1;
             currentColumn = 1;
-
-            currentNoteGroupIndex = 0;
 
             _isEndOfFile = false;
 
@@ -75,10 +70,10 @@ namespace SimaiSharp
                     ConsumeSubdivision(bytes);
                     break;
                 case ForceEachChar:
-                    forceEachMultiplier = -1;
+                    currentNoteFrame.isEach = true;
                     break;
-                case NewNoteGroupSeparatorChar:
-                    currentNoteGroupIndex++;
+                case ForceNonEachChar:
+                    currentNoteFrame.isEach = false;
                     break;
                 case >= ButtonCharStart and <= ButtonCharEnd or >= SensorCharStart and <= SensorCharEndOrEof:
                     ConsumeNote(bytes, currentByte, ref currentNoteFrame);
@@ -109,9 +104,7 @@ namespace SimaiSharp
                 currentNoteFrame = new NoteFrame();
             }
 
-            currentNoteGroupIndex =  0;
-            forceEachMultiplier   =  1;
-            currentTime           += currentTempo.SecondsPerBeat;
+            currentTime += currentTempo.SecondsPerBeat;
         }
 
         private static void ConsumeNote(Span<byte> bytes, byte currentByte, ref NoteFrame noteFrame)
@@ -126,8 +119,7 @@ namespace SimaiSharp
             var noSlideIntroAnimation = false;
             var note = new Note
             {
-                location  = buttonLocation,
-                eachGroup = currentNoteGroupIndex * forceEachMultiplier
+                location = buttonLocation,
             };
 
             SlidePath? slidePath = null;
@@ -170,7 +162,7 @@ namespace SimaiSharp
                         if (slidePath != null && slidePath.segmentTypes.Count != 0)
                             slidePath.noIntroAnimation = true;
                         break;
-                    case ForceNormalChar:
+                    case ForceNonStarChar:
                         forceTapStar = true;
                         break;
                     case ForceStarChar:
@@ -610,11 +602,12 @@ namespace SimaiSharp
         private const byte ColonChar             = (byte)':';
         private const byte SingleLineCommentChar = (byte)'|';
 
-        private const byte SplitFrameChar            = (byte)',';
-        private const byte SeparatorChar             = (byte)'/';
-        private const byte NewNoteGroupSeparatorChar = (byte)'`';
+        private const byte SplitFrameChar = (byte)',';
+        private const byte SeparatorChar  = (byte)'/';
 
-        private const byte ForceEachChar   = (byte)'0';
+        private const byte ForceEachChar    = (byte)'0';
+        private const byte ForceNonEachChar = (byte)'`';
+
         private const byte ButtonCharStart = (byte)'1';
         private const byte ButtonCharEnd   = (byte)'8';
 
@@ -629,12 +622,8 @@ namespace SimaiSharp
         private const byte TapRemovedSlideChar = (byte)'?';
         private const byte SuddenSlideChar     = (byte)'!';
 
-        /// <summary>
-        /// Turns stars into circles
-        /// </summary>
-        private const byte ForceNormalChar = (byte)'@';
-
-        private const byte ForceStarChar = (byte)'$';
+        private const byte ForceStarChar    = (byte)'$';
+        private const byte ForceNonStarChar = (byte)'@';
 
         private const byte NewSlideChar = (byte)'*';
 
