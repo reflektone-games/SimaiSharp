@@ -20,6 +20,7 @@ namespace SimaiSharp
         private static int currentLine   = 1;
         private static int currentColumn = 1;
 
+        private static bool _forceEachApplied;
         private static bool _isEndOfFile;
 
         public static SimaiChart Deserialize(Span<byte> bytes)
@@ -71,9 +72,11 @@ namespace SimaiSharp
                     break;
                 case ForceEachChar:
                     currentNoteFrame.isEach = true;
+                    _forceEachApplied       = true;
                     break;
                 case ForceNonEachChar:
                     currentNoteFrame.isEach = false;
+                    _forceEachApplied       = true;
                     break;
                 case >= ButtonCharStart and <= ButtonCharEnd or >= SensorCharStart and <= SensorCharEndOrEof:
                     ConsumeNote(bytes, currentByte, ref currentNoteFrame);
@@ -100,8 +103,16 @@ namespace SimaiSharp
                 currentNoteFrame.notes.TrimExcess();
                 currentNoteFrame.slidePaths.TrimExcess();
                 currentNoteFrame.time = currentTime;
+
+                if (!_forceEachApplied)
+                {
+                    if (currentNoteFrame.notes.Count > 1)
+                        currentNoteFrame.isEach = true;
+                }
+
                 chart.noteFrames.Add(currentNoteFrame);
-                currentNoteFrame = new NoteFrame();
+                currentNoteFrame  = new NoteFrame();
+                _forceEachApplied = false;
             }
 
             currentTime += currentTempo.SecondsPerBeat;
@@ -174,7 +185,7 @@ namespace SimaiSharp
                     #endregion
 
                     case DurationBracketOpen:
-                        if (slidePath is { segments: { Count: 0 } })
+                        if (slidePath is not null)
                             ConsumeSlideDuration(bytes, ref slidePath);
                         else ConsumeNoteDuration(bytes, ref note);
                         break;
@@ -373,19 +384,23 @@ namespace SimaiSharp
                     if (!TryParseFloat(bytes[(hashIndex + hashCount)..(currentIndex - 1)], out var duration))
                         ThrowContext<TypeMismatchException>(startInclusive);
 
-                    if (slidePath.segments.Count == 0)
-                        slidePath.delay += delay;
-
+                    slidePath.delay    =  delay;
                     slidePath.duration += duration;
                     break;
                 }
                 // [160#2]
                 case 1 when colonIndex == -1:
                 {
-                    if (!TryParseFloat(bytes[startInclusive..hashIndex], out var result))
+                    if (!TryParseFloat(bytes[startInclusive..hashIndex], out var newTempo))
                         ThrowContext<TypeMismatchException>();
 
-                    tempo.tempo = result;
+                    if (!TryParseFloat(bytes[(hashIndex + 1)..], out var duration))
+                        ThrowContext<TypeMismatchException>();
+
+                    tempo.tempo = newTempo;
+
+                    slidePath.delay    =  tempo.SecondsPerBar;
+                    slidePath.duration += duration;
                     break;
                 }
                 // [160#8:3]
@@ -402,8 +417,7 @@ namespace SimaiSharp
                     if (!TryParseFloat(bytes[(colonIndex + 1)..(currentIndex - 1)], out var denominator))
                         ThrowContext<TypeMismatchException>(colonIndex + 1);
 
-                    if (slidePath.segments.Count == 0)
-                        slidePath.delay = tempo.SecondsPerBar;
+                    slidePath.delay    =  tempo.SecondsPerBar;
                     slidePath.duration += tempo.SecondsPerBar / (nominator / 4) * denominator;
                     break;
                 }
@@ -416,8 +430,7 @@ namespace SimaiSharp
                     if (!TryParseFloat(bytes[(colonIndex + 1)..(currentIndex - 1)], out var denominator))
                         ThrowContext<TypeMismatchException>(colonIndex + 1);
 
-                    if (slidePath.segments.Count == 0)
-                        slidePath.delay = tempo.SecondsPerBar;
+                    slidePath.delay    =  tempo.SecondsPerBar;
                     slidePath.duration += tempo.SecondsPerBar / (nominator / 4) * denominator;
                     break;
                 }
