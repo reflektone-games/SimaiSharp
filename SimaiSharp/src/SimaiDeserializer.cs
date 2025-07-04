@@ -109,7 +109,7 @@ namespace SimaiSharp
 
         private static void ConsumeNote(Span<byte> bytes, byte currentByte, ref NoteFrame noteFrame)
         {
-            var buttonLocation = ConsumeLocationDirect(bytes, currentByte);
+            var noteLocation = ConsumeLocationDirect(bytes, currentByte);
 
             if (_isEndOfFile)
                 ThrowContext<ChartFormatException>();
@@ -119,7 +119,7 @@ namespace SimaiSharp
             var noSlideIntroAnimation = false;
             var note = new Note
             {
-                location = buttonLocation,
+                location = noteLocation,
             };
 
             SlidePath? slidePath = null;
@@ -225,7 +225,8 @@ namespace SimaiSharp
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             SlidePath CreateNewSlidePath(bool noIntroAnimation) => new()
             {
-                noIntroAnimation = noIntroAnimation
+                noIntroAnimation = noIntroAnimation,
+                vertices         = { noteLocation }
             };
         }
 
@@ -520,6 +521,13 @@ namespace SimaiSharp
 
             if (_isEndOfFile)
                 ThrowContext<ChartFormatException>();
+
+            // Use case: C sensor locations (button is omitted)
+            if (currentByte is not (>= ButtonCharStart and <= ButtonCharEnd))
+            {
+                currentIndex--;
+                return buttonLocation;
+            }
 
             buttonLocation += currentByte - ButtonCharStart;
             return buttonLocation;
