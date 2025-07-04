@@ -230,6 +230,9 @@ namespace SimaiSharp
             if (forceTapStar)
                 note.styles &= ~NoteStyles.Star;
 
+            if ((note.styles & NoteStyles.Hold) != 0 && slidePath != null && slidePath.segments.Count != 0)
+                note.length = Math.Min(note.length, slidePath.delay);
+
             noteFrame.notes.Add(note);
             return;
 
