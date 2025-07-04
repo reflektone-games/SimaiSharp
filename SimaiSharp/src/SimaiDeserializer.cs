@@ -199,7 +199,7 @@ namespace SimaiSharp
                         note.styles |= NoteStyles.Star;
 
                         slidePath ??= CreateNewSlidePath(noSlideIntroAnimation);
-                        ConsumeSlide(bytes, currentByte, ref slidePath);
+                        ConsumeSlide(bytes, currentByte, slidePath);
                         break;
 
                     default:
@@ -230,8 +230,7 @@ namespace SimaiSharp
             };
         }
 
-        private static void ConsumeSlide(Span<byte>    bytes, byte currentByte,
-                                         ref SlidePath slidePath)
+        private static void ConsumeSlide(Span<byte> bytes, byte currentByte, SlidePath slidePath)
         {
             var secondByte = MoveNext(bytes);
             var targetLocation =
@@ -261,7 +260,7 @@ namespace SimaiSharp
             slidePath.segments.Add(new SlideSegment
             {
                 type       = slideType,
-                startIndex = slidePath.vertices.Count
+                startIndex = slidePath.vertices.Count - 1
             });
 
             slidePath.vertices.Add(targetLocation);
@@ -515,7 +514,7 @@ namespace SimaiSharp
             if (currentByte < SensorCharStart)
                 return currentByte - ButtonCharStart;
 
-            var buttonLocation = ((currentByte - SensorCharStart) << 4) + 0xa0;
+            var result = ((currentByte - SensorCharStart) << 4) + 0xa0;
 
             currentByte = MoveNext(bytes);
 
@@ -523,14 +522,14 @@ namespace SimaiSharp
                 ThrowContext<ChartFormatException>();
 
             // Use case: C sensor locations (button is omitted)
-            if (currentByte is not (>= ButtonCharStart and <= ButtonCharEnd))
+            if (currentByte is < ButtonCharStart or > ButtonCharEnd)
             {
                 currentIndex--;
-                return buttonLocation;
+                return result;
             }
 
-            buttonLocation += currentByte - ButtonCharStart;
-            return buttonLocation;
+            result += currentByte - ButtonCharStart;
+            return result;
         }
 
         private static int ConsumeLocation(Span<byte> bytes, byte currentByte)
