@@ -323,8 +323,10 @@ namespace SimaiSharp
                     ThrowContext<TypeMismatchException>();
 
                 note.length = result;
+                return;
             }
-            else if (hashIndex != -1)
+
+            if (hashIndex != -1)
             {
                 if (!TryParseFloat(bytes[startInclusive..hashIndex], out var localTempo))
                     ThrowContext<TypeMismatchException>();
