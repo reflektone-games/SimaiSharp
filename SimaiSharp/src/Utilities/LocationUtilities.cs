@@ -27,5 +27,11 @@ namespace SimaiSharp.Utilities
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsTouch(this int location) =>
             location.ToNoteGroup() != 0;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int RotateNoteIndex(this int location, int delta)
+        {
+            return location.ToNoteGroup() == 0xC ? location : location.WithNoteIndex((location.ToNoteIndex() + delta) & 0x0F);
+        }
     }
 }
