@@ -131,6 +131,7 @@ namespace SimaiSharp
             var note = new Note
             {
                 location = noteLocation,
+                category = noteLocation.ToNoteGroup() == 0 ? NoteCategory.Tap : NoteCategory.Touch
             };
 
             SlidePath? slidePath = null;
