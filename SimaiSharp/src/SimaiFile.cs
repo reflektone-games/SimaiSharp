@@ -21,7 +21,7 @@ namespace SimaiSharp
         }
 
         /// <returns>A boolean indicating whether to decode the value</returns>
-        public delegate void OnEntryRead(string key, Span<byte> value);
+        public delegate void OnEntryRead(string key, ReadOnlySpan<byte> value);
 
         public Dictionary<int, MemorySlice> ParseFile()
         {
@@ -30,11 +30,11 @@ namespace SimaiSharp
             var fileLength = _accessor.Capacity;
             var bytes      = new Span<byte>(_ptr, (int)fileLength);
 
-            var  keyHash    = 0;
-            long keyStart   = 0;
-            long valueStart = 0;
-            var  readingKey = false;
-            int  byteIndex;
+            var keyHash    = 0;
+            var keyStart   = 0;
+            var valueStart = 0;
+            var readingKey = false;
+            int byteIndex;
 
             for (byteIndex = 0; byteIndex < fileLength; byteIndex++)
             {
@@ -45,7 +45,7 @@ namespace SimaiSharp
                     case (byte)'&': // New entry
                     {
                         if (keyStart < valueStart)
-                            entries[keyHash] = new MemorySlice(valueStart, (int)(byteIndex - valueStart));
+                            entries[keyHash] = new MemorySlice(valueStart, byteIndex - valueStart);
 
                         readingKey = true;
                         keyHash    = 0;
@@ -54,8 +54,8 @@ namespace SimaiSharp
                     }
                     case (byte)'=' when readingKey:
                     {
-                        var keyLength = byteIndex - (int)keyStart;
-                        keyHash    = ComputeHash(bytes.Slice((int)keyStart, keyLength));
+                        var keyLength = byteIndex - keyStart;
+                        keyHash    = ComputeHash(bytes.Slice(keyStart, keyLength));
                         valueStart = byteIndex + 1;
                         readingKey = false;
                         break;
@@ -67,7 +67,7 @@ namespace SimaiSharp
 
         FINALIZE:
             if (keyStart < valueStart)
-                entries[keyHash] = new MemorySlice(valueStart, (int)(byteIndex - valueStart));
+                entries[keyHash] = new MemorySlice(valueStart, byteIndex - valueStart);
 
             return entries;
         }
@@ -75,7 +75,7 @@ namespace SimaiSharp
         public void Enumerate(OnEntryRead onEntryRead)
         {
             var fileLength = _accessor.Capacity;
-            var bytes      = new Span<byte>(_ptr, (int)fileLength);
+            var bytes      = new ReadOnlySpan<byte>(_ptr, (int)fileLength);
 
             var  readingKey = false;
             long keyStart   = 0;
@@ -215,8 +215,7 @@ namespace SimaiSharp
             }
         }
 
-        public string GetString(MemorySlice slice) =>
-            GetString((int)slice.offset, slice.length);
+        public string GetString(MemorySlice slice) => GetString(slice.offset, slice.length);
 
         /// <summary>
         /// https://stackoverflow.com/questions/7956167/how-can-i-quickly-read-bytes-from-a-memory-mapped-file-in-net
@@ -264,10 +263,10 @@ namespace SimaiSharp
 
         public struct MemorySlice
         {
-            public readonly long offset;
-            public readonly int  length;
+            public readonly int offset;
+            public readonly int length;
 
-            public MemorySlice(long offset, int length)
+            public MemorySlice(int offset, int length)
             {
                 this.offset = offset;
                 this.length = length;
