@@ -30,11 +30,12 @@ namespace SimaiSharp
             var fileLength = _accessor.Capacity;
             var bytes      = new Span<byte>(_ptr, (int)fileLength);
 
-            var keyHash    = 0;
-            var keyStart   = 0;
-            var valueStart = 0;
-            var readingKey = false;
-            int byteIndex;
+            var  keyHash    = 0;
+            var  keyStart   = 0;
+            var  valueStart = 0;
+            var  readingKey = false;
+            byte lastByte   = 0;
+            int  byteIndex;
 
             for (byteIndex = 0; byteIndex < fileLength; byteIndex++)
             {
@@ -42,7 +43,7 @@ namespace SimaiSharp
 
                 switch (currentByte)
                 {
-                    case (byte)'&': // New entry
+                    case (byte)'&' when lastByte is (byte)'\0' or (byte)'\n' or (byte)'\r':
                     {
                         if (keyStart < valueStart)
                             entries[keyHash] = new MemorySlice(valueStart, byteIndex - valueStart);
@@ -54,15 +55,17 @@ namespace SimaiSharp
                     }
                     case (byte)'=' when readingKey:
                     {
+                        readingKey = false;
                         var keyLength = byteIndex - keyStart;
                         keyHash    = ComputeHash(bytes.Slice(keyStart, keyLength));
                         valueStart = byteIndex + 1;
-                        readingKey = false;
                         break;
                     }
                     case 0:
                         goto FINALIZE;
                 }
+
+                lastByte = currentByte;
             }
 
         FINALIZE:
@@ -81,6 +84,7 @@ namespace SimaiSharp
             long keyStart   = 0;
             long valueStart = 0;
             var  currentKey = string.Empty;
+            byte lastByte   = 0;
             int  byteIndex;
 
             for (byteIndex = 0; byteIndex < fileLength; byteIndex++)
@@ -89,9 +93,9 @@ namespace SimaiSharp
 
                 switch (currentByte)
                 {
-                    case (byte)'&':
+                    case (byte)'&' when lastByte is (byte)'\0' or (byte)'\n' or (byte)'\r':
                     {
-                        if (!string.IsNullOrEmpty(currentKey))
+                        if (keyStart < valueStart)
                             onEntryRead.Invoke(currentKey, bytes.Slice((int)valueStart, (int)(byteIndex - valueStart)));
 
                         readingKey = true;
@@ -102,20 +106,21 @@ namespace SimaiSharp
 
                     case (byte)'=' when readingKey:
                     {
+                        readingKey = false;
                         var keyLength = (int)(byteIndex - keyStart);
                         currentKey = Encoding.UTF8.GetString(bytes.Slice((int)keyStart, keyLength));
                         valueStart = byteIndex + 1;
-                        readingKey = false;
                         break;
                     }
-
-                    case 0: // Null terminator
+                    case 0:
                         goto FINALIZE;
                 }
+
+                lastByte = currentByte;
             }
 
         FINALIZE:
-            if (!string.IsNullOrEmpty(currentKey))
+            if (keyStart < valueStart)
                 onEntryRead.Invoke(currentKey, bytes.Slice((int)valueStart, (int)(byteIndex - valueStart)));
         }
 
@@ -129,6 +134,7 @@ namespace SimaiSharp
             long keyStart   = 0;
             long valueStart = 0;
             var  readingKey = false;
+            byte lastByte   = 0;
             int  byteIndex;
 
             for (byteIndex = 0; byteIndex < fileLength; byteIndex++)
@@ -137,7 +143,7 @@ namespace SimaiSharp
 
                 switch (currentByte)
                 {
-                    case (byte)'&': // New entry
+                    case (byte)'&' when lastByte is (byte)'\0' or (byte)'\n' or (byte)'\r':
                     {
                         if (keyHash == targetKeyHash)
                         {
@@ -147,7 +153,7 @@ namespace SimaiSharp
 
                         readingKey = true;
                         keyHash    = 0;
-                        keyStart   = byteIndex + 1; // Skips the "&" character
+                        keyStart   = byteIndex + 1;
                         break;
                     }
                     case (byte)'=' when readingKey:
@@ -161,6 +167,8 @@ namespace SimaiSharp
                     case 0:
                         goto FINALIZE;
                 }
+
+                lastByte = currentByte;
             }
 
         FINALIZE:

@@ -45,9 +45,7 @@ namespace SimaiSharp
             while (currentIndex < bytes.Length && !_isEndOfFile)
                 ConsumeNext(bytes, ref chart);
 
-            chart.finishTiming = currentTime;
             FlushNoteFrame(chart);
-
             return chart;
         }
 
@@ -59,9 +57,11 @@ namespace SimaiSharp
             {
                 // A single E without any trailing numbers signify EOF
                 case SensorCharEndOrEof when PeekNext(bytes) is < ButtonCharStart or > ButtonCharEnd:
+                    _isEndOfFile       = true;
+                    chart.finishTiming = currentTime;
+                    break;
                 case SplitFrameChar:
-                    if (currentByte == SensorCharEndOrEof)
-                        _isEndOfFile = true;
+                    chart.finishTiming = Math.Max(currentTime, chart.finishTiming);
                     FlushNoteFrame(chart);
                     break;
                 case TempoBracketOpen:
@@ -79,7 +79,7 @@ namespace SimaiSharp
                     _forceEachApplied       = true;
                     break;
                 case >= ButtonCharStart and <= ButtonCharEnd or >= SensorCharStart and <= SensorCharEndOrEof:
-                    ConsumeNote(bytes, currentByte, ref currentNoteFrame);
+                    ConsumeNote(bytes, currentByte, chart, ref currentNoteFrame);
                     break;
                 case SeparatorChar:
                 case NullChar:
@@ -118,7 +118,7 @@ namespace SimaiSharp
             currentTime += currentTempo.SecondsPerBeat;
         }
 
-        private static void ConsumeNote(Span<byte> bytes, byte currentByte, ref NoteFrame noteFrame)
+        private static void ConsumeNote(Span<byte> bytes, byte currentByte, SimaiChart chart, ref NoteFrame noteFrame)
         {
             var noteLocation = ConsumeLocationDirect(bytes, currentByte);
 
@@ -187,8 +187,16 @@ namespace SimaiSharp
 
                     case DurationBracketOpen:
                         if (slidePath is not null)
+                        {
                             ConsumeSlideDuration(bytes, ref slidePath);
-                        else ConsumeNoteDuration(bytes, ref note);
+                            chart.finishTiming = Math.Max(currentTime + slidePath.duration, chart.finishTiming);
+                        }
+                        else
+                        {
+                            ConsumeNoteDuration(bytes, ref note);
+                            chart.finishTiming = Math.Max(currentTime + note.length, chart.finishTiming);
+                        }
+
                         break;
 
                     case NewSlideChar:

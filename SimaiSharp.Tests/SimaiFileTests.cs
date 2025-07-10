@@ -6,7 +6,42 @@ namespace SimaiSharp.Tests
         private const string MaidataFilePath = "./Resources/SimaiFileTests/0.txt";
 
         [Test]
-        public void CanReadFromString()
+        public void CanReadEntry_ASCII()
+        {
+            var simaiFile = new SimaiFile(MaidataFilePath);
+            Assert.That(simaiFile.GetString(simaiFile["title"]).TrimEnd(), Is.EqualTo("SimaiFileRead test case"));
+        }
+
+        [Test]
+        public void CanReadEntry_Unicode()
+        {
+            var simaiFile = new SimaiFile(MaidataFilePath);
+            Assert.That(simaiFile.GetString(simaiFile["artist"]).TrimEnd(), Is.EqualTo("非英語文本"));
+        }
+
+        [Test]
+        public void CanReadEntry_WithSlash()
+        {
+            var simaiFile = new SimaiFile(MaidataFilePath);
+            Assert.That(simaiFile.GetString(simaiFile["slash"]).TrimEnd(), Is.EqualTo("Test/Entry"));
+        }
+
+        [Test]
+        public void CanReadEntry_WithAmpersand()
+        {
+            var simaiFile = new SimaiFile(MaidataFilePath);
+            Assert.That(simaiFile.GetString(simaiFile["and"]).TrimEnd(), Is.EqualTo("Test&Entry"));
+        }
+
+        [Test]
+        public void CanReadEntry_WithEquals()
+        {
+            var simaiFile = new SimaiFile(MaidataFilePath);
+            Assert.That(simaiFile.GetString(simaiFile["equals"]).TrimEnd(), Is.EqualTo("Test=Entry"));
+        }
+
+        [Test]
+        public void CanReadDictionary()
         {
             var kvp       = new Dictionary<int, SimaiFile.MemorySlice>();
             var simaiFile = new SimaiFile(MaidataFilePath);
@@ -15,11 +50,13 @@ namespace SimaiSharp.Tests
 
             Assert.Multiple(() =>
             {
-                Assert.That(simaiFile.GetString(kvp[SimaiFile.ComputeHash("title")]).TrimEnd(),   Is.EqualTo("SimaiFileRead test case"));
-                Assert.That(simaiFile.GetString(kvp[SimaiFile.ComputeHash("artist")]).TrimEnd(),  Is.EqualTo("非英語文本"));
-                Assert.That(simaiFile.GetString(kvp[SimaiFile.ComputeHash("first")]).TrimEnd(),   Is.EqualTo("0"));
-                Assert.That(simaiFile.GetString(kvp[SimaiFile.ComputeHash("lv_1")]).TrimEnd(),    Is.EqualTo("12+"));
-                Assert.That(simaiFile.GetString(kvp[SimaiFile.ComputeHash("inote_1")]).TrimEnd(), Is.EqualTo("(170){4}A1/2,3h[4:1],E"));
+                Assert.That(simaiFile.GetString(kvp[SimaiFile.ComputeHash("title")]).TrimEnd(),
+                            Is.EqualTo("SimaiFileRead test case"));
+                Assert.That(simaiFile.GetString(kvp[SimaiFile.ComputeHash("artist")]).TrimEnd(), Is.EqualTo("非英語文本"));
+                Assert.That(simaiFile.GetString(kvp[SimaiFile.ComputeHash("first")]).TrimEnd(),  Is.EqualTo("0"));
+                Assert.That(simaiFile.GetString(kvp[SimaiFile.ComputeHash("lv_1")]).TrimEnd(),   Is.EqualTo("12+"));
+                Assert.That(simaiFile.GetString(kvp[SimaiFile.ComputeHash("inote_1")]).TrimEnd(),
+                            Is.EqualTo("(170){4}A1/2,3h[4:1],E"));
             });
         }
 
@@ -41,7 +78,8 @@ namespace SimaiSharp.Tests
               3,{16}3,4,{8}2h[8:1]/5h[8:1],,18,,
               {16}2/7-3[8:1],,8-4[8:1],1,7,,8,,
               {8}7,81,2,83,7/2h[4:1],8,
-              6,{16}6,5,{8}7h[8:1]/4h[8:1],,7h[16:3]/1,,"));
+              6,{16}6,5,{8}7h[8:1]/4h[8:1],,7h[16:3]/1,,
+"));
         }
     }
 }

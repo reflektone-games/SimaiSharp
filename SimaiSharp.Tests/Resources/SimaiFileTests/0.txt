@@ -1,5 +1,8 @@
 &title=SimaiFileRead test case
 &artist=非英語文本
+&slash=Test/Entry
+&and=Test&Entry
+&equals=Test=Entry
 &first=0
 
 &lv_1=12+
