@@ -14,11 +14,11 @@ namespace SimaiSharp.Utilities
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int WithNoteGroup(this int location, int group) =>
-            (location & 0x0F) | (group << 4);
+            (location & 0x0F) | ((group & 0x07) << 4);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int WithNoteIndex(this int location, int index) =>
-            (location & 0xF0) | index;
+            (location & 0xF0) | (index & 0x07);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsTap(this int location) =>
