@@ -555,7 +555,9 @@ namespace SimaiSharp
                 return result;
             }
 
-            result += currentByte - ButtonCharStart;
+            if (result != 0xC0)
+                result += currentByte - ButtonCharStart;
+
             return result;
         }
 
