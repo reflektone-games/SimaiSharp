@@ -301,6 +301,8 @@ namespace SimaiSharp
 
         private static void ConsumeNoteDuration(Span<byte> bytes, ref Note note)
         {
+            var (startLine, startColumn) = GetCurrentPosition();
+
             byte currentByte;
             var  startInclusive = currentIndex;
             var  hashIndex      = -1;
@@ -328,7 +330,7 @@ namespace SimaiSharp
             if (hashIndex == startInclusive)
             {
                 if (!TryParseFloat(bytes[(startInclusive + 1)..(currentIndex - 1)], out var result))
-                    ThrowContext<TypeMismatchException>();
+                    ThrowContext<TypeMismatchException>(startLine, startColumn);
 
                 note.length = result;
                 return;
@@ -337,20 +339,20 @@ namespace SimaiSharp
             if (hashIndex != -1)
             {
                 if (!TryParseFloat(bytes[startInclusive..hashIndex], out var localTempo))
-                    ThrowContext<TypeMismatchException>();
+                    ThrowContext<TypeMismatchException>(startLine, startColumn);
 
                 tempo.tempo    = localTempo;
                 startInclusive = hashIndex + 1;
             }
 
             if (colonIndex == -1)
-                ThrowContext<ChartFormatException>(startInclusive);
+                ThrowContext<ChartFormatException>(startLine, startColumn);
 
             if (!TryParseFloat(bytes[startInclusive..colonIndex], out var nominator))
-                ThrowContext<TypeMismatchException>(startInclusive);
+                ThrowContext<TypeMismatchException>(startLine, startColumn);
 
             if (!TryParseFloat(bytes[(colonIndex + 1)..(currentIndex - 1)], out var denominator))
-                ThrowContext<TypeMismatchException>(colonIndex + 1);
+                ThrowContext<TypeMismatchException>(startLine, startColumn);
 
             note.length = tempo.SecondsPerBar / (nominator / 4) * denominator;
         }
@@ -360,6 +362,8 @@ namespace SimaiSharp
         /// </summary>
         private static void ConsumeSlideDuration(Span<byte> bytes, ref SlidePath slidePath)
         {
+            var (startLine, startColumn) = GetCurrentPosition();
+
             byte currentByte;
             var  startInclusive = currentIndex;
             var  hashIndex      = 0;
@@ -372,7 +376,7 @@ namespace SimaiSharp
                 currentByte = MoveNext(bytes);
 
                 if (_isEndOfFile)
-                    ThrowContext<ChartFormatException>();
+                    ThrowContext<ChartFormatException>(startLine, startColumn);
 
                 switch (currentByte)
                 {
@@ -393,10 +397,10 @@ namespace SimaiSharp
                 case 2:
                 {
                     if (!TryParseFloat(bytes[startInclusive..hashIndex], out var delay))
-                        ThrowContext<TypeMismatchException>();
+                        ThrowContext<TypeMismatchException>(startLine, startColumn);
 
                     if (!TryParseFloat(bytes[(hashIndex + hashCount)..(currentIndex - 1)], out var duration))
-                        ThrowContext<TypeMismatchException>(startInclusive);
+                        ThrowContext<TypeMismatchException>(startLine, startColumn);
 
                     slidePath.delay    =  delay;
                     slidePath.duration += duration;
@@ -406,10 +410,10 @@ namespace SimaiSharp
                 case 1 when colonIndex == -1:
                 {
                     if (!TryParseFloat(bytes[startInclusive..hashIndex], out var newTempo))
-                        ThrowContext<TypeMismatchException>();
+                        ThrowContext<TypeMismatchException>(startLine, startColumn);
 
                     if (!TryParseFloat(bytes[(hashIndex + 1)..], out var duration))
-                        ThrowContext<TypeMismatchException>();
+                        ThrowContext<TypeMismatchException>(startLine, startColumn);
 
                     tempo.tempo = newTempo;
 
@@ -426,10 +430,10 @@ namespace SimaiSharp
                     tempo.tempo = result;
 
                     if (!TryParseFloat(bytes[(hashIndex + hashCount)..colonIndex], out var nominator))
-                        ThrowContext<TypeMismatchException>(startInclusive);
+                        ThrowContext<TypeMismatchException>(startLine, startColumn);
 
                     if (!TryParseFloat(bytes[(colonIndex + 1)..(currentIndex - 1)], out var denominator))
-                        ThrowContext<TypeMismatchException>(colonIndex + 1);
+                        ThrowContext<TypeMismatchException>(startLine, startColumn);
 
                     slidePath.delay    =  tempo.SecondsPerBar;
                     slidePath.duration += tempo.SecondsPerBar / (nominator / 4) * denominator;
@@ -439,10 +443,10 @@ namespace SimaiSharp
                 case 0 when colonIndex != -1:
                 {
                     if (!TryParseFloat(bytes[startInclusive..colonIndex], out var nominator))
-                        ThrowContext<TypeMismatchException>(startInclusive);
+                        ThrowContext<TypeMismatchException>(startLine, startColumn);
 
                     if (!TryParseFloat(bytes[(colonIndex + 1)..(currentIndex - 1)], out var denominator))
-                        ThrowContext<TypeMismatchException>(colonIndex + 1);
+                        ThrowContext<TypeMismatchException>(startLine, startColumn);
 
                     slidePath.delay    =  tempo.SecondsPerBar;
                     slidePath.duration += tempo.SecondsPerBar / (nominator / 4) * denominator;
@@ -451,7 +455,7 @@ namespace SimaiSharp
                 default:
                 {
                     if (colonIndex == -1)
-                        ThrowContext<ChartFormatException>(startInclusive);
+                        ThrowContext<ChartFormatException>(startLine, startColumn);
                     break;
                 }
             }
@@ -459,8 +463,10 @@ namespace SimaiSharp
 
         private static void ConsumeTempo(Span<byte> bytes)
         {
+            var (startLine, startColumn) = GetCurrentPosition();
             byte currentByte;
-            var  startInclusive = currentIndex;
+
+            var startInclusive = currentIndex;
             do
             {
                 currentByte = MoveNext(bytes);
@@ -470,7 +476,7 @@ namespace SimaiSharp
             } while (currentByte != TempoBracketClose);
 
             if (!TryParseFloat(bytes[startInclusive..(currentIndex - 1)], out var result))
-                ThrowContext<TypeMismatchException>(startInclusive);
+                ThrowContext<TypeMismatchException>(startLine, startColumn);
 
             currentTempo.time  = currentTime;
             currentTempo.tempo = result;
@@ -478,6 +484,7 @@ namespace SimaiSharp
 
         private static void ConsumeSubdivision(Span<byte> bytes)
         {
+            var (startLine, startColumn) = GetCurrentPosition();
             var startInclusive    = currentIndex;
             var explicitTempoMode = false;
 
@@ -502,7 +509,7 @@ namespace SimaiSharp
             } while (currentByte != SubdivisionBracketClose);
 
             if (!TryParseFloat(bytes[startInclusive..(currentIndex - 1)], out var result))
-                ThrowContext<TypeMismatchException>(startInclusive);
+                ThrowContext<TypeMismatchException>(startLine, startColumn);
 
             currentTempo.time = currentTime;
 
@@ -580,12 +587,11 @@ namespace SimaiSharp
             return float.TryParse(charSpan, NumberStyles.Float, CultureInfo.InvariantCulture, out value);
         }
 
-        private static void ThrowContext<T>(int line = -1, int column = -1) where T : SimaiException, new()
-        {
-            if (line   == -1) line   = currentLine;
-            if (column == -1) column = currentColumn;
+        private static void ThrowContext<T>() where T : SimaiException, new() =>
+            throw new T { column = currentColumn, line = currentLine };
+
+        private static void ThrowContext<T>(int line, int column) where T : SimaiException, new() =>
             throw new T { column = column, line = line };
-        }
 
         /// <summary>
         /// Responsible for stripping comments and keeping track of the current line and column
@@ -630,6 +636,8 @@ namespace SimaiSharp
                 return 0;
             return bytes[currentIndex];
         }
+
+        private static (int line, int column) GetCurrentPosition() => (currentLine, currentColumn);
 
         #region Constants
 
