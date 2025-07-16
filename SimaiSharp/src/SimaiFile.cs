@@ -1,24 +1,22 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.IO.MemoryMappedFiles;
 using System.Text;
+using SimaiSharp.FileReading;
 
 namespace SimaiSharp
 {
-    public sealed unsafe class SimaiFile : IDisposable
+    public sealed class SimaiFile : IDisposable
     {
         private          Dictionary<int, MemorySlice>? _entries;
-        private readonly MemoryMappedFile              _memoryMap;
-        private readonly MemoryMappedViewAccessor      _accessor;
-        private readonly byte*                         _ptr;
+        private readonly IFileReader                   _fileReader;
 
-        public SimaiFile(string path)
-        {
-            _memoryMap = MemoryMappedFile.CreateFromFile(path, FileMode.Open, null, 0, MemoryMappedFileAccess.Read);
-            _accessor  = _memoryMap.CreateViewAccessor(0, 0, MemoryMappedFileAccess.Read);
-            _accessor.SafeMemoryMappedViewHandle.AcquirePointer(ref _ptr);
-        }
+        public SimaiFile(IFileReader fileReader) => _fileReader = fileReader;
+
+        public static SimaiFile FromMemoryMappedFile(string path) =>
+            new(new MemoryMappedFileReader(path));
+
+        public static SimaiFile FromFile(string path) =>
+            new(new SimpleFileReader(path));
 
         /// <returns>A boolean indicating whether to decode the value</returns>
         public delegate void OnEntryRead(string key, ReadOnlySpan<byte> value);
@@ -26,9 +24,7 @@ namespace SimaiSharp
         public Dictionary<int, MemorySlice> ParseFile()
         {
             var entries = new Dictionary<int, MemorySlice>();
-
-            var fileLength = _accessor.Capacity;
-            var bytes      = new Span<byte>(_ptr, (int)fileLength);
+            var bytes   = _fileReader.GetSpan();
 
             var  keyHash    = 0;
             var  keyStart   = 0;
@@ -37,7 +33,7 @@ namespace SimaiSharp
             byte lastByte   = 0;
             int  byteIndex;
 
-            for (byteIndex = 0; byteIndex < fileLength; byteIndex++)
+            for (byteIndex = 0; byteIndex < bytes.Length; byteIndex++)
             {
                 var currentByte = bytes[byteIndex];
 
@@ -77,8 +73,7 @@ namespace SimaiSharp
 
         public void Enumerate(OnEntryRead onEntryRead)
         {
-            var fileLength = _accessor.Capacity;
-            var bytes      = new ReadOnlySpan<byte>(_ptr, (int)fileLength);
+            var bytes = _fileReader.GetSpan();
 
             var  readingKey = false;
             long keyStart   = 0;
@@ -87,7 +82,7 @@ namespace SimaiSharp
             byte lastByte   = 0;
             int  byteIndex;
 
-            for (byteIndex = 0; byteIndex < fileLength; byteIndex++)
+            for (byteIndex = 0; byteIndex < bytes.Length; byteIndex++)
             {
                 var currentByte = bytes[byteIndex];
 
@@ -127,8 +122,7 @@ namespace SimaiSharp
         public bool TryGetValueOnce(string key, out string value)
         {
             var targetKeyHash = ComputeHash(key);
-            var fileLength    = _accessor.Capacity;
-            var bytes         = new Span<byte>(_ptr, (int)fileLength);
+            var bytes         = _fileReader.GetSpan();
 
             var  keyHash    = 0;
             long keyStart   = 0;
@@ -137,7 +131,7 @@ namespace SimaiSharp
             byte lastByte   = 0;
             int  byteIndex;
 
-            for (byteIndex = 0; byteIndex < fileLength; byteIndex++)
+            for (byteIndex = 0; byteIndex < bytes.Length; byteIndex++)
             {
                 var currentByte = bytes[byteIndex];
 
@@ -147,7 +141,7 @@ namespace SimaiSharp
                     {
                         if (keyHash == targetKeyHash)
                         {
-                            value = GetString((int)valueStart, (int)(byteIndex - valueStart));
+                            value = Encoding.UTF8.GetString(bytes.Slice((int)valueStart, (int)(byteIndex - valueStart)));
                             return true;
                         }
 
@@ -174,7 +168,7 @@ namespace SimaiSharp
         FINALIZE:
             if (keyHash == targetKeyHash)
             {
-                value = GetString((int)valueStart, (int)(byteIndex - valueStart));
+                value = Encoding.UTF8.GetString(bytes.Slice((int)valueStart, (int)(byteIndex - valueStart)));
                 return true;
             }
 
@@ -182,13 +176,13 @@ namespace SimaiSharp
             return false;
         }
 
-        public bool TryGetValueSpan(string key, out Span<byte> result)
+        public bool TryGetValueSpan(string key, out ReadOnlySpan<byte> result)
         {
             _entries ??= ParseFile();
 
             if (_entries.TryGetValue(ComputeHash(key.AsSpan()), out var entry))
             {
-                result = new Span<byte>(_ptr + entry.offset, entry.length);
+                result = _fileReader.GetSpan().Slice(entry.offset, entry.length);
                 return true;
             }
 
@@ -202,7 +196,7 @@ namespace SimaiSharp
 
             if (_entries.TryGetValue(ComputeHash(key.AsSpan()), out var entry))
             {
-                value = GetString(entry);
+                value = GetString(_fileReader.GetSpan(), entry);
                 return true;
             }
 
@@ -223,21 +217,16 @@ namespace SimaiSharp
             }
         }
 
-        public string GetString(MemorySlice slice) => GetString(slice.offset, slice.length);
-
         /// <summary>
         /// https://stackoverflow.com/questions/7956167/how-can-i-quickly-read-bytes-from-a-memory-mapped-file-in-net
         /// </summary>
-        private string GetString(int offset, int length)
-        {
-            var result = Encoding.UTF8.GetString(_ptr + offset, length);
-            return result;
-        }
+        public string GetString(ReadOnlySpan<byte> bytes, MemorySlice slice) =>
+            Encoding.UTF8.GetString(bytes.Slice(slice.offset, slice.length));
 
         /// <summary>
         /// https://stackoverflow.com/questions/16340/how-do-i-generate-a-hashcode-from-a-byte-array-in-c
         /// </summary>
-        public static int ComputeHash(Span<byte> data)
+        public static int ComputeHash(ReadOnlySpan<byte> data)
         {
             unchecked
             {
@@ -281,11 +270,6 @@ namespace SimaiSharp
             }
         }
 
-        public void Dispose()
-        {
-            _accessor.SafeMemoryMappedViewHandle.ReleasePointer();
-            _accessor.Dispose();
-            _memoryMap.Dispose();
-        }
+        public void Dispose() => _fileReader.Dispose();
     }
 }

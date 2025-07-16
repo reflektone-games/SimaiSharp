@@ -23,7 +23,7 @@ namespace SimaiSharp
         private static bool _forceEachApplied;
         private static bool _isEndOfFile;
 
-        public static SimaiChart Deserialize(Span<byte> bytes)
+        public static SimaiChart Deserialize(ReadOnlySpan<byte> bytes)
         {
             currentIndex = 0;
 
@@ -49,7 +49,7 @@ namespace SimaiSharp
             return chart;
         }
 
-        private static void ConsumeNext(Span<byte> bytes, ref SimaiChart chart)
+        private static void ConsumeNext(ReadOnlySpan<byte> bytes, ref SimaiChart chart)
         {
             var currentByte = MoveNext(bytes);
 
@@ -118,7 +118,7 @@ namespace SimaiSharp
             currentTime += currentTempo.SecondsPerBeat;
         }
 
-        private static void ConsumeNote(Span<byte> bytes, byte currentByte, SimaiChart chart, ref NoteFrame noteFrame)
+        private static void ConsumeNote(ReadOnlySpan<byte> bytes, byte currentByte, SimaiChart chart, ref NoteFrame noteFrame)
         {
             var noteLocation = ConsumeLocationDirect(bytes, currentByte);
 
@@ -253,7 +253,7 @@ namespace SimaiSharp
             };
         }
 
-        private static void ConsumeSlide(Span<byte> bytes, byte currentByte, SlidePath slidePath)
+        private static void ConsumeSlide(ReadOnlySpan<byte> bytes, byte currentByte, SlidePath slidePath)
         {
             var secondByte = MoveNext(bytes);
             var targetLocation =
@@ -299,7 +299,7 @@ namespace SimaiSharp
             slidePath.vertices.Add(targetLocation);
         }
 
-        private static void ConsumeNoteDuration(Span<byte> bytes, ref Note note)
+        private static void ConsumeNoteDuration(ReadOnlySpan<byte> bytes, ref Note note)
         {
             var (startLine, startColumn) = GetCurrentPosition();
 
@@ -360,7 +360,7 @@ namespace SimaiSharp
         /// <summary>
         /// https://w.atwiki.jp/simai/pages/25.html#id_3afb985d
         /// </summary>
-        private static void ConsumeSlideDuration(Span<byte> bytes, ref SlidePath slidePath)
+        private static void ConsumeSlideDuration(ReadOnlySpan<byte> bytes, ref SlidePath slidePath)
         {
             var (startLine, startColumn) = GetCurrentPosition();
 
@@ -461,7 +461,7 @@ namespace SimaiSharp
             }
         }
 
-        private static void ConsumeTempo(Span<byte> bytes)
+        private static void ConsumeTempo(ReadOnlySpan<byte> bytes)
         {
             var (startLine, startColumn) = GetCurrentPosition();
             byte currentByte;
@@ -482,7 +482,7 @@ namespace SimaiSharp
             currentTempo.tempo = result;
         }
 
-        private static void ConsumeSubdivision(Span<byte> bytes)
+        private static void ConsumeSubdivision(ReadOnlySpan<byte> bytes)
         {
             var (startLine, startColumn) = GetCurrentPosition();
             var startInclusive    = currentIndex;
@@ -543,7 +543,7 @@ namespace SimaiSharp
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static int IsBottomHalf(int buttonIndex) => (buttonIndex >> 2) ^ ((buttonIndex >> 1) & 1);
 
-        private static int ConsumeLocationDirect(Span<byte> bytes, byte currentByte)
+        private static int ConsumeLocationDirect(ReadOnlySpan<byte> bytes, byte currentByte)
         {
             if (currentByte < SensorCharStart)
                 return currentByte - ButtonCharStart;
@@ -568,7 +568,7 @@ namespace SimaiSharp
             return result;
         }
 
-        private static int ConsumeLocation(Span<byte> bytes, byte currentByte)
+        private static int ConsumeLocation(ReadOnlySpan<byte> bytes, byte currentByte)
         {
             if (currentByte is >= ButtonCharStart and <= ButtonCharEnd or >= SensorCharStart and <= SensorCharEndOrEof)
                 return ConsumeLocationDirect(bytes, currentByte);
@@ -577,7 +577,7 @@ namespace SimaiSharp
             return -1;
         }
 
-        private static bool TryParseFloat(Span<byte> utf8Bytes, out float value)
+        private static bool TryParseFloat(ReadOnlySpan<byte> utf8Bytes, out float value)
         {
             // The resulting char array will have a maximum length of utf8Bytes.Length,
             // But a mismatch may happen due to code points.
@@ -598,7 +598,7 @@ namespace SimaiSharp
         /// </summary>
         /// <param name="bytes"></param>
         /// <returns></returns>
-        private static byte MoveNext(Span<byte> bytes)
+        private static byte MoveNext(ReadOnlySpan<byte> bytes)
         {
             byte currentByte;
             var  commentCharCount = 0;
@@ -630,7 +630,7 @@ namespace SimaiSharp
             return currentByte;
         }
 
-        private static byte PeekNext(Span<byte> bytes)
+        private static byte PeekNext(ReadOnlySpan<byte> bytes)
         {
             if (currentIndex >= bytes.Length)
                 return 0;
