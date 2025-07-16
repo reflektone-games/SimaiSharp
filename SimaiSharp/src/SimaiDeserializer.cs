@@ -17,8 +17,8 @@ namespace SimaiSharp
         private static TempoChange currentTempo;
         private static NoteFrame   currentNoteFrame = null!;
 
-        private static int currentLine   = 1;
-        private static int currentColumn = 1;
+        private static int currentLine;
+        private static int currentColumn;
 
         private static bool _forceEachApplied;
         private static bool _isEndOfFile;
@@ -31,8 +31,8 @@ namespace SimaiSharp
             currentTempo     = new TempoChange();
             currentNoteFrame = new NoteFrame();
 
-            currentLine   = 1;
-            currentColumn = 1;
+            currentLine   = 0;
+            currentColumn = 0;
 
             _isEndOfFile = false;
 
@@ -614,16 +614,17 @@ namespace SimaiSharp
                 currentByte = bytes[currentIndex++];
                 currentColumn++;
 
-                if (currentByte == '\n')
+                switch (currentByte)
                 {
-                    currentColumn = 1;
-                    currentLine++;
-                    commentCharCount = 0;
-                    continue;
+                    case LineFeedChar:
+                        currentColumn = 0;
+                        currentLine++;
+                        commentCharCount = 0;
+                        continue;
+                    case SingleLineCommentChar:
+                        commentCharCount++;
+                        break;
                 }
-
-                if (currentByte == SingleLineCommentChar)
-                    commentCharCount++;
             } while (currentByte is CarriageReturnChar or LineFeedChar or SingleLineCommentChar ||
                      commentCharCount >= 2);
 
