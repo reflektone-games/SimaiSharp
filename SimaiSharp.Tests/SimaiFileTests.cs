@@ -8,54 +8,56 @@ namespace SimaiSharp.Tests
         [Test]
         public void CanReadEntry_ASCII()
         {
-            var simaiFile = new SimaiFile(MaidataFilePath);
-            Assert.That(simaiFile.GetString(simaiFile["title"]).TrimEnd(), Is.EqualTo("SimaiFileRead test case"));
+            var simaiFile = SimaiFile.FromMemoryMappedFile(MaidataFilePath);
+            Assert.That(simaiFile["title"].TrimEnd(), Is.EqualTo("SimaiFileRead test case"));
         }
 
         [Test]
         public void CanReadEntry_Unicode()
         {
-            var simaiFile = new SimaiFile(MaidataFilePath);
-            Assert.That(simaiFile.GetString(simaiFile["artist"]).TrimEnd(), Is.EqualTo("非英語文本"));
+            var simaiFile = SimaiFile.FromMemoryMappedFile(MaidataFilePath);
+            Assert.That(simaiFile["artist"].TrimEnd(), Is.EqualTo("非英語文本"));
         }
 
         [Test]
         public void CanReadEntry_WithSlash()
         {
-            var simaiFile = new SimaiFile(MaidataFilePath);
-            Assert.That(simaiFile.GetString(simaiFile["slash"]).TrimEnd(), Is.EqualTo("Test/Entry"));
+            var simaiFile = SimaiFile.FromMemoryMappedFile(MaidataFilePath);
+            Assert.That(simaiFile["slash"].TrimEnd(), Is.EqualTo("Test/Entry"));
         }
 
         [Test]
         public void CanReadEntry_WithAmpersand()
         {
-            var simaiFile = new SimaiFile(MaidataFilePath);
-            Assert.That(simaiFile.GetString(simaiFile["and"]).TrimEnd(), Is.EqualTo("Test&Entry"));
+            var simaiFile = SimaiFile.FromMemoryMappedFile(MaidataFilePath);
+            Assert.That(simaiFile["and"].TrimEnd(), Is.EqualTo("Test&Entry"));
         }
 
         [Test]
         public void CanReadEntry_WithEquals()
         {
-            var simaiFile = new SimaiFile(MaidataFilePath);
-            Assert.That(simaiFile.GetString(simaiFile["equals"]).TrimEnd(), Is.EqualTo("Test=Entry"));
+            var simaiFile = SimaiFile.FromMemoryMappedFile(MaidataFilePath);
+            Assert.That(simaiFile["equals"].TrimEnd(), Is.EqualTo("Test=Entry"));
         }
 
         [Test]
         public void CanReadDictionary()
         {
             var kvp       = new Dictionary<int, SimaiFile.MemorySlice>();
-            var simaiFile = new SimaiFile(MaidataFilePath);
+            var simaiFile = SimaiFile.FromMemoryMappedFile(MaidataFilePath);
 
             Assert.DoesNotThrow(() => { kvp = simaiFile.ParseFile(); });
 
             Assert.Multiple(() =>
             {
-                Assert.That(simaiFile.GetString(kvp[SimaiFile.ComputeHash("title")]).TrimEnd(),
+                var span = simaiFile.GetSpan();
+
+                Assert.That(simaiFile.GetString(span, kvp[SimaiFile.ComputeHash("title")]).TrimEnd(),
                             Is.EqualTo("SimaiFileRead test case"));
-                Assert.That(simaiFile.GetString(kvp[SimaiFile.ComputeHash("artist")]).TrimEnd(), Is.EqualTo("非英語文本"));
-                Assert.That(simaiFile.GetString(kvp[SimaiFile.ComputeHash("first")]).TrimEnd(),  Is.EqualTo("0"));
-                Assert.That(simaiFile.GetString(kvp[SimaiFile.ComputeHash("lv_1")]).TrimEnd(),   Is.EqualTo("12+"));
-                Assert.That(simaiFile.GetString(kvp[SimaiFile.ComputeHash("inote_1")]).TrimEnd(),
+                Assert.That(simaiFile.GetString(span, kvp[SimaiFile.ComputeHash("artist")]).TrimEnd(), Is.EqualTo("非英語文本"));
+                Assert.That(simaiFile.GetString(span, kvp[SimaiFile.ComputeHash("first")]).TrimEnd(),  Is.EqualTo("0"));
+                Assert.That(simaiFile.GetString(span, kvp[SimaiFile.ComputeHash("lv_1")]).TrimEnd(),   Is.EqualTo("12+"));
+                Assert.That(simaiFile.GetString(span, kvp[SimaiFile.ComputeHash("inote_1")]).TrimEnd(),
                             Is.EqualTo("(170){4}A1/2,3h[4:1],E"));
             });
         }
@@ -63,16 +65,16 @@ namespace SimaiSharp.Tests
         [Test]
         public void CanReadIndividualKeyValuePair()
         {
-            var simaiFile = new SimaiFile(MaidataFilePath);
-            Assert.That(simaiFile.GetString(simaiFile["inote_2"]).TrimEnd(),
+            var simaiFile = SimaiFile.FromMemoryMappedFile(MaidataFilePath);
+            Assert.That(simaiFile["inote_2"].TrimEnd(),
                         Is.EqualTo("(170){1},{8}6h[8:1]/2,7,,3h[8:1]/7,2,,6h[8:1]/2,5,,E"));
         }
 
         [Test]
         public void CanReadMultilineValues()
         {
-            var simaiFile = new SimaiFile(MaidataFilePath);
-            Assert.That(simaiFile.GetString(simaiFile["inote_3"]),
+            var simaiFile = SimaiFile.FromMemoryMappedFile(MaidataFilePath);
+            Assert.That(simaiFile["inote_3"],
                         Is.EqualTo(@"(170){16}7/2-6[8:1],,1-5[8:1],8,2,,1,,
               {8}2,18,7,16,2/7h[4:1],1,
               3,{16}3,4,{8}2h[8:1]/5h[8:1],,18,,

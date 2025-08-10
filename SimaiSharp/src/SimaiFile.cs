@@ -16,7 +16,9 @@ namespace SimaiSharp
             new(new MemoryMappedFileReader(path));
 
         public static SimaiFile FromFile(string path) =>
-            new(new SimpleFileReader(path));
+            new(new BufferedFileReader(path));
+
+        public ReadOnlySpan<byte> GetSpan() => _fileReader.GetSpan();
 
         /// <returns>A boolean indicating whether to decode the value</returns>
         public delegate void OnEntryRead(string key, ReadOnlySpan<byte> value);
@@ -24,7 +26,7 @@ namespace SimaiSharp
         public Dictionary<int, MemorySlice> ParseFile()
         {
             var entries = new Dictionary<int, MemorySlice>();
-            var bytes   = _fileReader.GetSpan();
+            var bytes   = GetSpan();
 
             var  keyHash    = 0;
             var  keyStart   = 0;
@@ -73,7 +75,7 @@ namespace SimaiSharp
 
         public void Enumerate(OnEntryRead onEntryRead)
         {
-            var bytes = _fileReader.GetSpan();
+            var bytes = GetSpan();
 
             var  readingKey = false;
             long keyStart   = 0;
@@ -122,7 +124,7 @@ namespace SimaiSharp
         public bool TryGetValueOnce(string key, out string value)
         {
             var targetKeyHash = ComputeHash(key);
-            var bytes         = _fileReader.GetSpan();
+            var bytes         = GetSpan();
 
             var  keyHash    = 0;
             long keyStart   = 0;
@@ -182,7 +184,7 @@ namespace SimaiSharp
 
             if (_entries.TryGetValue(ComputeHash(key.AsSpan()), out var entry))
             {
-                result = _fileReader.GetSpan().Slice(entry.offset, entry.length);
+                result = GetSpan().Slice(entry.offset, entry.length);
                 return true;
             }
 
@@ -204,14 +206,14 @@ namespace SimaiSharp
             return false;
         }
 
-        public MemorySlice this[string key]
+        public string this[string key]
         {
             get
             {
                 _entries ??= ParseFile();
 
                 if (_entries.TryGetValue(ComputeHash(key), out var value))
-                    return value;
+                    return GetString(GetSpan(), value);
 
                 throw new KeyNotFoundException($"Key '{key}' is not present in the SimaiFile.");
             }

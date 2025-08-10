@@ -1,5 +1,3 @@
-using SimaiSharp.Structures;
-
 namespace SimaiSharp.Tests;
 
 [TestFixture]
@@ -11,7 +9,7 @@ public class SimaiChartTests
         const string maidataFilePath = @"./Resources/SimaiChartTests/CanReadEmptyChart.txt";
         const string chartKey        = @"inote_1";
 
-        using var simaiFile = new SimaiFile(maidataFilePath);
+        using var simaiFile = SimaiFile.FromMemoryMappedFile(maidataFilePath);
         if (simaiFile.TryGetValueSpan(chartKey, out var chartSpan))
         {
             var chart = SimaiConvert.Deserialize(chartSpan);
@@ -25,7 +23,7 @@ public class SimaiChartTests
         const string maidataFilePath = @"./Resources/SimaiChartTests/CanReadSingularLocation.txt";
         const string chartKey        = @"inote_1";
 
-        using var simaiFile = new SimaiFile(maidataFilePath);
+        using var simaiFile = SimaiFile.FromMemoryMappedFile(maidataFilePath);
         if (simaiFile.TryGetValueSpan(chartKey, out var chartSpan))
         {
             var chart = SimaiConvert.Deserialize(chartSpan);
@@ -41,7 +39,7 @@ public class SimaiChartTests
         const string maidataFilePath = @"./Resources/SimaiChartTests/CanReadLocationsWithSeparators.txt";
         const string chartKey        = @"inote_1";
 
-        using var simaiFile = new SimaiFile(maidataFilePath);
+        using var simaiFile = SimaiFile.FromMemoryMappedFile(maidataFilePath);
         if (simaiFile.TryGetValueSpan(chartKey, out var chartSpan))
         {
             var chart = SimaiConvert.Deserialize(chartSpan);
@@ -67,7 +65,7 @@ public class SimaiChartTests
         const string maidataFilePath = @"./Resources/SimaiChartTests/CanReadLocationsWithoutSeparators.txt";
         const string chartKey        = @"inote_1";
 
-        using var simaiFile = new SimaiFile(maidataFilePath);
+        using var simaiFile = SimaiFile.FromMemoryMappedFile(maidataFilePath);
 
         if (simaiFile.TryGetValueSpan(chartKey, out var chartSpan))
         {
@@ -95,7 +93,7 @@ public class SimaiChartTests
         const string maidataFilePath = @"./Resources/SimaiChartTests/CanReadTempoWithDefaultSubdivisions.txt";
         const string chartKey        = @"inote_1";
 
-        using var simaiFile = new SimaiFile(maidataFilePath);
+        using var simaiFile = SimaiFile.FromMemoryMappedFile(maidataFilePath);
         if (simaiFile.TryGetValueSpan(chartKey, out var chartSpan))
         {
             var chart = SimaiConvert.Deserialize(chartSpan);
@@ -111,7 +109,7 @@ public class SimaiChartTests
         const string maidataFilePath = @"./Resources/SimaiChartTests/CanReadTempoChangesWithDefaultSubdivisions.txt";
         const string chartKey        = @"inote_1";
 
-        using var simaiFile = new SimaiFile(maidataFilePath);
+        using var simaiFile = SimaiFile.FromMemoryMappedFile(maidataFilePath);
         if (simaiFile.TryGetValueSpan(chartKey, out var chartSpan))
         {
             var chart = SimaiConvert.Deserialize(chartSpan);
@@ -131,7 +129,7 @@ public class SimaiChartTests
         const string maidataFilePath = @"./Resources/SimaiFileTests/0.txt";
         const string chartKey        = @"inote_3";
 
-        using var simaiFile = new SimaiFile(maidataFilePath);
+        using var simaiFile = SimaiFile.FromMemoryMappedFile(maidataFilePath);
         if (simaiFile.TryGetValueSpan(chartKey, out var chartSpan))
         {
             var chart = SimaiConvert.Deserialize(chartSpan);
