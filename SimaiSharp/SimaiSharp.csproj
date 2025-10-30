@@ -3,12 +3,19 @@
     <PropertyGroup>
         <TargetFramework>netstandard2.1</TargetFramework>
         <Nullable>enable</Nullable>
-        <LangVersion>9</LangVersion>
+        <LangVersion>13</LangVersion>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
     <ItemGroup>
-        <Folder Include="docs" />
+        <Folder Include="docs"/>
     </ItemGroup>
 
+    <Target Name="CopyPublishOutputToAstroDX" AfterTargets="Publish">
+        <ItemGroup>
+            <PublishOutputFiles Include="$(PublishDir)**\*.*"/>
+        </ItemGroup>
+        <Copy SourceFiles="@(PublishOutputFiles)" DestinationFolder="D:\Projects\NonDisclosable\AstroDX\AstroDX.Game\Assets\Plugins\SimaiSharp" SkipUnchangedFiles="true"/>
+        <Copy SourceFiles="@(PublishOutputFiles)" DestinationFolder="D:\Projects\NonDisclosable\AstroDX\AstroDX.Space\Libraries" SkipUnchangedFiles="true"/>
+    </Target>
 </Project>

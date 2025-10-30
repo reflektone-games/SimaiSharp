@@ -1,32 +1,29 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using SimaiSharp.FileReading;
 
 namespace SimaiSharp
 {
-    public sealed class SimaiFile : IDisposable
+    public sealed partial class SimaiFile(ISimaiFileReader simaiFileReader) : IDisposable
     {
-        private          Dictionary<int, MemorySlice>? _entries;
-        private readonly IFileReader                   _fileReader;
+        private bool FullyScannedFile => _nextUnreadByteIndex >= GetByteSpan().Length;
 
-        public SimaiFile(IFileReader fileReader) => _fileReader = fileReader;
+        private readonly Dictionary<int, MemorySlice> _entries = new();
+        private          int                          _nextUnreadByteIndex;
 
-        public static SimaiFile FromMemoryMappedFile(string path) =>
-            new(new MemoryMappedFileReader(path));
+        public static SimaiFile FromPath(string   path)   => new(ISimaiFileReader.Create(path));
+        public static SimaiFile FromStream(Stream stream) => new(ISimaiFileReader.Create(stream));
 
-        public static SimaiFile FromFile(string path) =>
-            new(new BufferedFileReader(path));
-
-        public ReadOnlySpan<byte> GetSpan() => _fileReader.GetSpan();
+        public ReadOnlySpan<byte> GetByteSpan() => simaiFileReader.GetSpan();
 
         /// <returns>A boolean indicating whether to decode the value</returns>
         public delegate void OnEntryRead(string key, ReadOnlySpan<byte> value);
 
-        public Dictionary<int, MemorySlice> ParseFile()
+        public void ScanFile(int? stopAtKey = null)
         {
-            var entries = new Dictionary<int, MemorySlice>();
-            var bytes   = GetSpan();
+            var bytes = GetByteSpan();
 
             var  keyHash    = 0;
             var  keyStart   = 0;
@@ -35,7 +32,7 @@ namespace SimaiSharp
             byte lastByte   = 0;
             int  byteIndex;
 
-            for (byteIndex = 0; byteIndex < bytes.Length; byteIndex++)
+            for (byteIndex = _nextUnreadByteIndex; byteIndex < bytes.Length; byteIndex++)
             {
                 var currentByte = bytes[byteIndex];
 
@@ -43,8 +40,13 @@ namespace SimaiSharp
                 {
                     case (byte)'&' when lastByte is (byte)'\0' or (byte)'\n' or (byte)'\r':
                     {
-                        if (keyStart < valueStart)
-                            entries[keyHash] = new MemorySlice(valueStart, byteIndex - valueStart);
+                        if (keyStart < valueStart) // consider valueStart != 0
+                        {
+                            if (stopAtKey == keyHash)
+                                goto FINALIZE;
+
+                            _entries[keyHash] = new MemorySlice(valueStart, byteIndex - valueStart);
+                        }
 
                         readingKey = true;
                         keyHash    = 0;
@@ -68,14 +70,14 @@ namespace SimaiSharp
 
         FINALIZE:
             if (keyStart < valueStart)
-                entries[keyHash] = new MemorySlice(valueStart, byteIndex - valueStart);
+                _entries[keyHash] = new MemorySlice(valueStart, byteIndex - valueStart);
 
-            return entries;
+            _nextUnreadByteIndex = byteIndex;
         }
 
         public void Enumerate(OnEntryRead onEntryRead)
         {
-            var bytes = GetSpan();
+            var bytes = GetByteSpan();
 
             var  readingKey = false;
             long keyStart   = 0;
@@ -121,56 +123,16 @@ namespace SimaiSharp
                 onEntryRead.Invoke(currentKey, bytes.Slice((int)valueStart, (int)(byteIndex - valueStart)));
         }
 
-        public bool TryGetValueOnce(string key, out string value)
+        public string GetValue(string key) =>
+            TryGetValue(key, out var result)
+                ? result
+                : throw new KeyNotFoundException($"Key {key} is not defined in this file.");
+
+        public bool TryGetValue(string key, out string value)
         {
-            var targetKeyHash = ComputeHash(key);
-            var bytes         = GetSpan();
-
-            var  keyHash    = 0;
-            long keyStart   = 0;
-            long valueStart = 0;
-            var  readingKey = false;
-            byte lastByte   = 0;
-            int  byteIndex;
-
-            for (byteIndex = 0; byteIndex < bytes.Length; byteIndex++)
+            if (TryGetValueSpan(key, out var resultSpan))
             {
-                var currentByte = bytes[byteIndex];
-
-                switch (currentByte)
-                {
-                    case (byte)'&' when lastByte is (byte)'\0' or (byte)'\n' or (byte)'\r':
-                    {
-                        if (keyHash == targetKeyHash)
-                        {
-                            value = Encoding.UTF8.GetString(bytes.Slice((int)valueStart, (int)(byteIndex - valueStart)));
-                            return true;
-                        }
-
-                        readingKey = true;
-                        keyHash    = 0;
-                        keyStart   = byteIndex + 1;
-                        break;
-                    }
-                    case (byte)'=' when readingKey:
-                    {
-                        var keyLength = byteIndex - (int)keyStart;
-                        keyHash    = ComputeHash(bytes.Slice((int)keyStart, keyLength));
-                        valueStart = byteIndex + 1;
-                        readingKey = false;
-                        break;
-                    }
-                    case 0:
-                        goto FINALIZE;
-                }
-
-                lastByte = currentByte;
-            }
-
-        FINALIZE:
-            if (keyHash == targetKeyHash)
-            {
-                value = Encoding.UTF8.GetString(bytes.Slice((int)valueStart, (int)(byteIndex - valueStart)));
+                value = Encoding.UTF8.GetString(resultSpan);
                 return true;
             }
 
@@ -180,43 +142,30 @@ namespace SimaiSharp
 
         public bool TryGetValueSpan(string key, out ReadOnlySpan<byte> result)
         {
-            _entries ??= ParseFile();
+            var keyHash = ComputeHash(key);
 
-            if (_entries.TryGetValue(ComputeHash(key.AsSpan()), out var entry))
+            if (_entries.TryGetValue(keyHash, out var entry))
             {
-                result = GetSpan().Slice(entry.offset, entry.length);
+                result = GetByteSpan().Slice(entry.offset, entry.length);
+                return true;
+            }
+
+            if (FullyScannedFile)
+            {
+                result = null;
+                return false;
+            }
+
+            ScanFile(keyHash);
+
+            if (_entries.TryGetValue(keyHash, out entry))
+            {
+                result = GetByteSpan().Slice(entry.offset, entry.length);
                 return true;
             }
 
             result = null;
             return false;
-        }
-
-        public bool TryGetValue(string key, out string value)
-        {
-            _entries ??= ParseFile();
-
-            if (_entries.TryGetValue(ComputeHash(key.AsSpan()), out var entry))
-            {
-                value = GetString(_fileReader.GetSpan(), entry);
-                return true;
-            }
-
-            value = string.Empty;
-            return false;
-        }
-
-        public string this[string key]
-        {
-            get
-            {
-                _entries ??= ParseFile();
-
-                if (_entries.TryGetValue(ComputeHash(key), out var value))
-                    return GetString(GetSpan(), value);
-
-                throw new KeyNotFoundException($"Key '{key}' is not present in the SimaiFile.");
-            }
         }
 
         /// <summary>
@@ -228,50 +177,37 @@ namespace SimaiSharp
         /// <summary>
         /// https://stackoverflow.com/questions/16340/how-do-i-generate-a-hashcode-from-a-byte-array-in-c
         /// </summary>
-        public static int ComputeHash(ReadOnlySpan<byte> data)
+        public static int ComputeHash(ReadOnlySpan<byte> bytes)
         {
+            const int p = 16777619;
             unchecked
             {
-                const int p    = 16777619;
-                var       hash = (int)2166136261;
-
-                for (var i = 0; i < data.Length; i++)
-                    hash = (hash ^ data[i]) * p;
-
+                var hash = (int)2166136261;
+                foreach (var @byte in bytes)
+                    hash = (hash ^ @byte) * p;
                 return hash;
             }
         }
 
-        public static int ComputeHash(ReadOnlySpan<char> data)
+        public static int ComputeHash(ReadOnlySpan<char> chars)
         {
+            const int p = 16777619;
             unchecked
             {
-                const int p    = 16777619;
-                var       hash = (int)2166136261;
-
-                for (var i = 0; i < data.Length; i++)
-                {
-                    var c = data[i];
-                    for (; c > 0; c >>= 8)
+                var hash = (int)2166136261;
+                foreach (var @char in chars)
+                    for (var c = @char; c > 0; c >>= 8)
                         hash = (hash ^ (c & 0xFF)) * p;
-                }
-
                 return hash;
             }
         }
 
-        public struct MemorySlice
+        public readonly struct MemorySlice(int offset, int length)
         {
-            public readonly int offset;
-            public readonly int length;
-
-            public MemorySlice(int offset, int length)
-            {
-                this.offset = offset;
-                this.length = length;
-            }
+            public readonly int offset = offset;
+            public readonly int length = length;
         }
 
-        public void Dispose() => _fileReader.Dispose();
+        public void Dispose() => simaiFileReader.Dispose();
     }
 }
