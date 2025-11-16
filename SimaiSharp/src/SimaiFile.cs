@@ -6,7 +6,7 @@ using SimaiSharp.FileReading;
 
 namespace SimaiSharp
 {
-    public sealed partial class SimaiFile(ISimaiFileReader simaiFileReader) : IDisposable
+    public sealed class SimaiFile(ISimaiFileReader simaiFileReader) : IDisposable
     {
         private bool FullyScannedFile => _nextUnreadByteIndex >= GetByteSpan().Length;
 

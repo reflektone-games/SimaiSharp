@@ -20,7 +20,6 @@ namespace SimaiSharp
         private static int currentLine;
         private static int currentColumn;
 
-        private static bool _forceEachApplied;
         private static bool _isEndOfFile;
 
         public static SimaiChart Deserialize(ReadOnlySpan<byte> bytes)
@@ -60,6 +59,11 @@ namespace SimaiSharp
                     _isEndOfFile       = true;
                     chart.finishTiming = currentTime;
                     break;
+                case TimeStepChar:
+                    chart.finishTiming = Math.Max(currentTime, chart.finishTiming);
+                    FlushNoteFrame(chart);
+                    currentTime += currentTempo.SecondsPerBeat;
+                    break;
                 case SplitFrameChar:
                     chart.finishTiming = Math.Max(currentTime, chart.finishTiming);
                     FlushNoteFrame(chart);
@@ -72,11 +76,6 @@ namespace SimaiSharp
                     break;
                 case ForceEachChar:
                     currentNoteFrame.isEach = true;
-                    _forceEachApplied       = true;
-                    break;
-                case ForceNonEachChar:
-                    currentNoteFrame.isEach = false;
-                    _forceEachApplied       = true;
                     break;
                 case >= ButtonCharStart and <= ButtonCharEnd or >= SensorCharStart and <= SensorCharEndOrEof:
                     ConsumeNote(bytes, currentByte, chart, ref currentNoteFrame);
@@ -97,25 +96,19 @@ namespace SimaiSharp
             if (chart.tempoChanges.Count == 0 || Math.Abs(chart.tempoChanges[^1].time - currentTempo.time) > float.Epsilon)
                 chart.tempoChanges.Add(currentTempo);
 
-            if (currentNoteFrame.notes.Count      != 0 ||
-                currentNoteFrame.slidePaths.Count != 0)
-            {
-                currentNoteFrame.notes.TrimExcess();
-                currentNoteFrame.slidePaths.TrimExcess();
-                currentNoteFrame.time = currentTime;
+            if (currentNoteFrame.notes.Count      == 0 &&
+                currentNoteFrame.slidePaths.Count == 0)
+                return;
 
-                if (!_forceEachApplied)
-                {
-                    if (currentNoteFrame.notes.Count > 1)
-                        currentNoteFrame.isEach = true;
-                }
+            currentNoteFrame.notes.TrimExcess();
+            currentNoteFrame.slidePaths.TrimExcess();
+            currentNoteFrame.time = currentTime;
 
-                chart.noteFrames.Add(currentNoteFrame);
-                currentNoteFrame  = new NoteFrame();
-                _forceEachApplied = false;
-            }
+            if (currentNoteFrame.notes.Count > 1)
+                currentNoteFrame.isEach = true;
 
-            currentTime += currentTempo.SecondsPerBeat;
+            chart.noteFrames.Add(currentNoteFrame);
+            currentNoteFrame = new NoteFrame();
         }
 
         private static void ConsumeNote(ReadOnlySpan<byte> bytes, byte currentByte, SimaiChart chart, ref NoteFrame noteFrame)
@@ -660,11 +653,11 @@ namespace SimaiSharp
         private const byte ColonChar             = (byte)':';
         private const byte SingleLineCommentChar = (byte)'|';
 
-        private const byte SplitFrameChar = (byte)',';
-        private const byte SeparatorChar  = (byte)'/';
+        private const byte TimeStepChar  = (byte)',';
+        private const byte SeparatorChar = (byte)'/';
 
-        private const byte ForceEachChar    = (byte)'0';
-        private const byte ForceNonEachChar = (byte)'`';
+        private const byte ForceEachChar  = (byte)'0';
+        private const byte SplitFrameChar = (byte)'`';
 
         private const byte ButtonCharStart = (byte)'1';
         private const byte ButtonCharEnd   = (byte)'8';

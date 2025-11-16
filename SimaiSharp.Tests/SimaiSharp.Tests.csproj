@@ -29,24 +29,10 @@
       <None Update="Resources\SimaiFileTests\0.txt">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
-      <None Update="Resources\SimaiChartTests\CanReadEmptyChart.txt">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-      <None Update="Resources\SimaiChartTests\CanReadSingularLocation.txt">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-      <None Update="Resources\SimaiChartTests\CanReadTempoWithDefaultSubdivisions.txt">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-      <None Update="Resources\SimaiChartTests\CanReadTempoChangesWithDefaultSubdivisions.txt">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-      <None Update="Resources\SimaiChartTests\CanReadLocationsWithSeparators.txt">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-      <None Update="Resources\SimaiChartTests\CanReadLocationsWithoutSeparators.txt">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Resources\SimaiChartTests\" />
     </ItemGroup>
 
 </Project>
