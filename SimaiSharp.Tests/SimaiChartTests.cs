@@ -122,13 +122,21 @@ public class SimaiChartTests
         const string chartKey        = @"inote_3";
 
         using var simaiFile = SimaiFile.FromPath(maidataFilePath);
-        if (simaiFile.TryGetValueSpan(chartKey, out var chartSpan))
-        {
-            var chart = SimaiConvert.Deserialize(chartSpan);
 
-            var serialized = SimaiConvert.Serialize(chart);
-            Console.WriteLine(serialized);
-            Assert.That(serialized, Is.Not.Empty);
-        }
+        if (!simaiFile.TryGetValueSpan(chartKey, out var chartSpan))
+            return;
+
+        var chart = SimaiConvert.Deserialize(chartSpan);
+
+        using var buffer = new MemoryStream();
+
+        using var writer = new StreamWriter(buffer, Encoding.UTF8);
+        SimaiConvert.Serialize(chart, writer);
+
+        using var reader = new StreamReader(buffer, Encoding.UTF8, false);
+        buffer.Position = 0;
+        var result = reader.ReadToEnd();
+        Console.WriteLine(result);
+        Assert.That(result, Is.Not.Empty);
     }
 }

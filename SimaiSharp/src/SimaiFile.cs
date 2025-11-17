@@ -128,6 +128,11 @@ namespace SimaiSharp
                 ? result
                 : throw new KeyNotFoundException($"Key {key} is not defined in this file.");
 
+        public ReadOnlySpan<byte> GetValueSpan(string key) =>
+            TryGetValueSpan(key, out var result)
+                ? result
+                : throw new KeyNotFoundException($"Key {key} is not defined in this file.");
+
         public bool TryGetValue(string key, out string value)
         {
             if (TryGetValueSpan(key, out var resultSpan))
