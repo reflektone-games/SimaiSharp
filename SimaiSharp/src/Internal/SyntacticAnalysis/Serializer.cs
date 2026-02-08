@@ -18,22 +18,22 @@ namespace SimaiSharp.Internal.SyntacticAnalysis
 			while (_currentTime <= chart.FinishTiming.GetValueOrDefault(0))
 			{
 				if (_currentTimingChange < chart.TimingChanges.Length - 1 &&
-					Math.Abs(chart.TimingChanges[_currentTimingChange + 1].time - _currentTime) < float.Epsilon)
+					Math.Abs(chart.TimingChanges[_currentTimingChange + 1].time - _currentTime) < 0.001)
 				{
 					_currentTimingChange++;
 
 					if (Math.Abs(chart.TimingChanges[_currentTimingChange].tempo -
-								 chart.TimingChanges[_currentTimingChange - 1].tempo) > float.Epsilon)
+								 chart.TimingChanges[_currentTimingChange - 1].tempo) > 0.001)
 						writer.Write($"({chart.TimingChanges[_currentTimingChange].tempo})");
 
 					if (Math.Abs(chart.TimingChanges[_currentTimingChange].subdivisions -
-								 chart.TimingChanges[_currentTimingChange - 1].subdivisions) > float.Epsilon)
+								 chart.TimingChanges[_currentTimingChange - 1].subdivisions) > 0.001)
 						writer.Write($"{{{chart.TimingChanges[_currentTimingChange].subdivisions}}}");
 				}
 
 				if (_currentNoteCollection < chart.NoteCollections.Length &&
 					Math.Abs(chart.NoteCollections[_currentNoteCollection].time - _currentTime) <=
-					float.Epsilon)
+					0.001)
 				{
 					SerializeNoteCollection(chart.NoteCollections[_currentNoteCollection], writer);
 
