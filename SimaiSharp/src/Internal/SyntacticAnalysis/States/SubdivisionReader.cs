@@ -23,7 +23,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 				newTimingChange.SetSeconds(explicitTempo);
 				newTimingChange.time = parent.currentTime;
 
-				if (Math.Abs(parent.timingChanges.Last.Value.time - parent.currentTime) <= float.Epsilon)
+				if (Math.Abs(parent.timingChanges.Last.Value.time - parent.currentTime) <= 0.001)
 					parent.timingChanges.RemoveLast();
 
 				parent.timingChanges.AddLast(newTimingChange);
@@ -40,7 +40,7 @@ namespace SimaiSharp.Internal.SyntacticAnalysis.States
 				newTimingChange.subdivisions = subdivision;
 				newTimingChange.time = parent.currentTime;
 
-				if (Math.Abs(parent.timingChanges.Last.Value.time - parent.currentTime) <= float.Epsilon)
+				if (Math.Abs(parent.timingChanges.Last.Value.time - parent.currentTime) <= 0.001)
 					parent.timingChanges.RemoveLast();
 
 				parent.timingChanges.AddLast(newTimingChange);
