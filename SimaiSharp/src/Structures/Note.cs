@@ -62,6 +62,9 @@ namespace SimaiSharp.Structures
 			if (type == NoteType.ForceInvalidate)
 				writer.Write(slideMorph == SlideMorph.FadeIn ? '?' : '!');
 
+			if (type == NoteType.Break)
+				writer.Write('b');
+
 			switch (appearance)
 			{
 				case NoteAppearance.ForceNormal:
