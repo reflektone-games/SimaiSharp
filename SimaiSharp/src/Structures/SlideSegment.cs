@@ -31,7 +31,7 @@ namespace SimaiSharp.Structures
 					writer.Write((startLocation.index + 2) % 8 >= 4 ? $"<{vertices[0]}" : $">{vertices[0]}");
 					break;
 				case SlideType.RingCcw:
-					writer.Write((startLocation.index + 2) % 8 >= 4 ? $"<{vertices[0]}" : $">{vertices[0]}");
+					writer.Write((startLocation.index + 2) % 8 >= 4 ? $">{vertices[0]}" : $"<{vertices[0]}");
 					break;
 				case SlideType.Fold:
 					writer.Write($"v{vertices[0]}");
