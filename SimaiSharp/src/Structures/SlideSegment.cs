@@ -40,7 +40,7 @@ namespace SimaiSharp.Structures
 					writer.Write($"q{vertices[0]}");
 					break;
 				case SlideType.CurveCcw:
-					writer.Write($"pp{vertices[0]}");
+					writer.Write($"p{vertices[0]}");
 					break;
 				case SlideType.ZigZagS:
 					writer.Write($"s{vertices[0]}");
