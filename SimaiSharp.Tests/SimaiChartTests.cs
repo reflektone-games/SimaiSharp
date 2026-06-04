@@ -116,6 +116,22 @@ public class SimaiChartTests
     }
 
     [Test]
+    public void CanReadSlideDurationWithDefaultDelayAndDecimalDuration()
+    {
+        var target = Make("(60)1-5[##2]");
+        var chart  = SimaiConvert.Deserialize(target);
+
+        Assert.That(chart.noteFrames,               Has.Count.EqualTo(1));
+        Assert.That(chart.noteFrames[0].SlidePaths, Has.Count.EqualTo(1));
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(chart.noteFrames[0].SlidePaths[0].delay,    Is.EqualTo(1));
+            Assert.That(chart.noteFrames[0].SlidePaths[0].duration, Is.EqualTo(2));
+        }
+    }
+
+    [Test]
     public void CanSerialize()
     {
         const string maidataFilePath = @"./Resources/SimaiFileTests/0.txt";
