@@ -151,7 +151,10 @@ namespace SimaiSharp
                         note.styles |= NoteStyles.Ex;
                         break;
                     case Constants.MineChar:
-                        note.styles |= NoteStyles.Mine;
+                        if (slidePath != null)
+                            slidePath.isMine = true;
+                        else
+                            note.styles |= NoteStyles.Mine;
                         break;
                     case Constants.HoldChar:
                         if (note.category != NoteCategory.Break)
