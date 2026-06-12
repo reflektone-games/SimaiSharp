@@ -2,21 +2,20 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using SimaiSharp.FileReading;
 
-namespace SimaiSharp
+namespace SimaiSharp.FileReading
 {
-    public sealed class SimaiFile(ISimaiFileReader simaiFileReader) : IDisposable
+    public sealed class SimaiFileReader(IFileReader fileReader) : IDisposable
     {
         private bool FullyScannedFile => _nextUnreadByteIndex >= GetByteSpan().Length;
 
         private readonly Dictionary<int, MemorySlice> _entries = new();
         private          int                          _nextUnreadByteIndex;
 
-        public static SimaiFile FromPath(string   path)   => new(ISimaiFileReader.Create(path));
-        public static SimaiFile FromStream(Stream stream) => new(ISimaiFileReader.Create(stream));
+        public static SimaiFileReader FromPath(string   path)   => new(IFileReader.Create(path));
+        public static SimaiFileReader FromStream(Stream stream) => new(IFileReader.Create(stream));
 
-        public ReadOnlySpan<byte> GetByteSpan() => simaiFileReader.GetSpan();
+        public ReadOnlySpan<byte> GetByteSpan() => fileReader.GetSpan();
 
         /// <returns>A boolean indicating whether to decode the value</returns>
         public delegate void OnEntryRead(string key, ReadOnlySpan<byte> value);
@@ -213,6 +212,6 @@ namespace SimaiSharp
             public readonly int length = length;
         }
 
-        public void Dispose() => simaiFileReader.Dispose();
+        public void Dispose() => fileReader.Dispose();
     }
 }

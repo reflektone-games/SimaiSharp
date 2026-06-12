@@ -1,4 +1,5 @@
 using System.Text;
+using SimaiSharp.FileReading;
 
 namespace SimaiSharp.Tests;
 
@@ -154,7 +155,7 @@ public class SimaiChartTests
         const string maidataFilePath = @"./Resources/SimaiFileTests/0.txt";
         const string chartKey        = @"inote_3";
 
-        using var simaiFile = SimaiFile.FromPath(maidataFilePath);
+        using var simaiFile = SimaiFileReader.FromPath(maidataFilePath);
 
         if (!simaiFile.TryGetValueSpan(chartKey, out var chartSpan))
             return;

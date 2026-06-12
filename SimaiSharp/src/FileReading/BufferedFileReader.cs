@@ -4,19 +4,19 @@ using System.IO;
 
 namespace SimaiSharp.FileReading
 {
-    internal sealed class BufferedSimaiFileReader : ISimaiFileReader
+    internal sealed class BufferedFileReader : IFileReader
     {
         private IMemoryOwner<byte>? _bytes;
 
-        internal static BufferedSimaiFileReader Create(string path)
+        internal static BufferedFileReader Create(string path)
         {
             using var file = File.OpenRead(path);
             return Create(file);
         }
 
-        internal static unsafe BufferedSimaiFileReader Create(Stream stream)
+        internal static unsafe BufferedFileReader Create(Stream stream)
         {
-            var        result = new BufferedSimaiFileReader();
+            var        result = new BufferedFileReader();
             Span<byte> tester = stackalloc byte[3];
             if (stream.CanSeek && stream.Read(tester) == 3 && tester[0] == 0xEF && tester[1] == 0xBB && tester[2] == 0xBF)
             {

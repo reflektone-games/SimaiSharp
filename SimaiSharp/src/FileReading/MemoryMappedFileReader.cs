@@ -4,16 +4,16 @@ using System.IO.MemoryMappedFiles;
 
 namespace SimaiSharp.FileReading
 {
-    internal sealed unsafe class MemoryMappedSimaiFileReader : ISimaiFileReader
+    internal sealed unsafe class MemoryMappedFileReader : IFileReader
     {
         private MemoryMappedFile?         _memoryMap;
         private MemoryMappedViewAccessor? _accessor;
         private byte*                     _ptr;
         private int                       _length;
 
-        public static MemoryMappedSimaiFileReader Create(string path)
+        public static MemoryMappedFileReader Create(string path)
         {
-            var result = new MemoryMappedSimaiFileReader();
+            var result = new MemoryMappedFileReader();
             result._memoryMap = MemoryMappedFile.CreateFromFile(path, FileMode.Open, null, 0, MemoryMappedFileAccess.Read);
             result._accessor  = result._memoryMap.CreateViewAccessor(0, 0, MemoryMappedFileAccess.Read);
             result._accessor.SafeMemoryMappedViewHandle.AcquirePointer(ref result._ptr);

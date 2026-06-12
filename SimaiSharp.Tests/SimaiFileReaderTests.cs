@@ -1,49 +1,51 @@
+using SimaiSharp.FileReading;
+
 namespace SimaiSharp.Tests
 {
     [TestFixture]
-    public class SimaiFileTests
+    public class SimaiFileReaderTests
     {
         private const string MaidataFilePath = "./Resources/SimaiFileTests/0.txt";
 
         [Test]
         public void CanReadEntry_ASCII()
         {
-            var simaiFile = SimaiFile.FromPath(MaidataFilePath);
+            var simaiFile = SimaiFileReader.FromPath(MaidataFilePath);
             Assert.That(simaiFile.GetValue("title").TrimEnd(), Is.EqualTo("SimaiFileRead test case"));
         }
 
         [Test]
         public void CanReadEntry_Unicode()
         {
-            var simaiFile = SimaiFile.FromPath(MaidataFilePath);
+            var simaiFile = SimaiFileReader.FromPath(MaidataFilePath);
             Assert.That(simaiFile.GetValue("artist").TrimEnd(), Is.EqualTo("非英語文本"));
         }
 
         [Test]
         public void CanReadEntry_WithSlash()
         {
-            var simaiFile = SimaiFile.FromPath(MaidataFilePath);
+            var simaiFile = SimaiFileReader.FromPath(MaidataFilePath);
             Assert.That(simaiFile.GetValue("slash").TrimEnd(), Is.EqualTo("Test/Entry"));
         }
 
         [Test]
         public void CanReadEntry_WithAmpersand()
         {
-            var simaiFile = SimaiFile.FromPath(MaidataFilePath);
+            var simaiFile = SimaiFileReader.FromPath(MaidataFilePath);
             Assert.That(simaiFile.GetValue("and").TrimEnd(), Is.EqualTo("Test&Entry"));
         }
 
         [Test]
         public void CanReadEntry_WithEquals()
         {
-            var simaiFile = SimaiFile.FromPath(MaidataFilePath);
+            var simaiFile = SimaiFileReader.FromPath(MaidataFilePath);
             Assert.That(simaiFile.GetValue("equals").TrimEnd(), Is.EqualTo("Test=Entry"));
         }
 
         [Test]
         public void CanReadDictionary()
         {
-            var simaiFile = SimaiFile.FromPath(MaidataFilePath);
+            var simaiFile = SimaiFileReader.FromPath(MaidataFilePath);
 
             Assert.DoesNotThrow(() => { simaiFile.ScanFile(); });
 
@@ -60,7 +62,7 @@ namespace SimaiSharp.Tests
         [Test]
         public void CanReadIndividualKeyValuePair()
         {
-            var simaiFile = SimaiFile.FromPath(MaidataFilePath);
+            var simaiFile = SimaiFileReader.FromPath(MaidataFilePath);
             Assert.That(simaiFile.GetValue("inote_2").TrimEnd(),
                         Is.EqualTo("(170){1},{8}6h[8:1]/2,7,,3h[8:1]/7,2,,6h[8:1]/2,5,,E"));
         }
@@ -68,7 +70,7 @@ namespace SimaiSharp.Tests
         [Test]
         public void CanReadMultilineValues()
         {
-            var simaiFile = SimaiFile.FromPath(MaidataFilePath);
+            var simaiFile = SimaiFileReader.FromPath(MaidataFilePath);
             Assert.That(simaiFile.GetValue("inote_3"),
                         Is.EqualTo("""
                                    (170){16}7/2-6[8:1],,1-5[8:1],8,2,,1,,
