@@ -9,5 +9,6 @@ namespace SimaiSharp.Structures
         public float             finishTiming;
         public List<NoteFrame>   noteFrames   = new();
         public List<TempoChange> tempoChanges = new();
+        public ulong               hash;
     }
 }

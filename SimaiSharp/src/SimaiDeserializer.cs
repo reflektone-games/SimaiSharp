@@ -19,7 +19,8 @@ namespace SimaiSharp
         private static int currentLine;
         private static int currentColumn;
 
-        private static bool _isEndOfFile;
+        private static bool        _isEndOfFile;
+        private static ChartHasher _hasher;
 
         public static SimaiChart Deserialize(ReadOnlySpan<byte> bytes)
         {
@@ -33,6 +34,7 @@ namespace SimaiSharp
             currentColumn = 0;
 
             _isEndOfFile = false;
+            _hasher      = new ChartHasher();
 
             var chart = new SimaiChart
             {
@@ -44,12 +46,14 @@ namespace SimaiSharp
                 ConsumeNext(bytes, ref chart);
 
             FlushNoteFrame(chart);
+            chart.hash = _hasher.GetHash();
             return chart;
         }
 
         private static void ConsumeNext(ReadOnlySpan<byte> bytes, ref SimaiChart chart)
         {
             var currentByte = MoveNext(bytes);
+            _hasher.Append(currentByte);
 
             switch (currentByte)
             {
