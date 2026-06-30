@@ -638,7 +638,10 @@ namespace SimaiSharp
                         commentCharCount++;
                         break;
                 }
-            } while (currentByte is Constants.CarriageReturnChar or Constants.LineFeedChar or Constants.SingleLineCommentChar ||
+            } while (currentByte is Constants.CarriageReturnChar
+                                    or Constants.LineFeedChar
+                                    or Constants.SpaceChar
+                                    or Constants.SingleLineCommentChar ||
                      commentCharCount >= 2);
 
             return currentByte;
