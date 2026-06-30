@@ -53,7 +53,6 @@ namespace SimaiSharp
         private static void ConsumeNext(ReadOnlySpan<byte> bytes, ref SimaiChart chart)
         {
             var currentByte = MoveNext(bytes);
-            _hasher.Append(currentByte);
 
             switch (currentByte)
             {
@@ -644,6 +643,7 @@ namespace SimaiSharp
                                     or Constants.SingleLineCommentChar ||
                      commentCharCount >= 2);
 
+            _hasher.Append(currentByte);
             return currentByte;
         }
 
