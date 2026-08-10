@@ -3,7 +3,6 @@ using System.Collections.Generic;
 
 namespace SimaiSharp.Structures
 {
-    [Serializable]
     public class SimaiChart
     {
         public float             finishTiming;

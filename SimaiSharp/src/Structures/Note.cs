@@ -3,7 +3,6 @@ using SimaiSharp.Utilities;
 
 namespace SimaiSharp.Structures
 {
-    [Serializable]
     public sealed class Note
     {
         /// <summary>
