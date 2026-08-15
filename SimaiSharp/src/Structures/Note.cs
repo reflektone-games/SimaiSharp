@@ -1,4 +1,3 @@
-using System;
 using SimaiSharp.Utilities;
 
 namespace SimaiSharp.Structures
