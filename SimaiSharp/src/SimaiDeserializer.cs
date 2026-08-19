@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -10,6 +11,9 @@ namespace SimaiSharp
 {
     internal static class SimaiDeserializer
     {
+        public static readonly Dictionary<int, int>    NoteGroupAliases = new();
+        public static readonly Dictionary<int, double> JumpMarkers      = new();
+
         private static int currentIndex;
 
         internal static double      time;
@@ -27,6 +31,8 @@ namespace SimaiSharp
 
         public static SimaiChart Deserialize(ReadOnlySpan<byte> bytes)
         {
+            NoteGroupAliases.Clear();
+            JumpMarkers.Clear();
             currentIndex = 0;
 
             time                  = 0;
@@ -48,6 +54,14 @@ namespace SimaiSharp
             NextNoteGroup(0);
             chart.finishTiming = time;
             chart.hash         = _hasher.GetHash();
+            foreach (var group in chart.noteGroups)
+            {
+                group.notes.Sort((a,                  b) => a.time.CompareTo(b.time));
+                group.slidePaths.Sort((a,             b) => a.time.CompareTo(b.time));
+                group.speedVariationChanges.Sort((a,  b) => a.time.CompareTo(b.time));
+                group.speedMultiplierChanges.Sort((a, b) => a.time.CompareTo(b.time));
+            }
+
             return chart;
         }
 
@@ -100,21 +114,34 @@ namespace SimaiSharp
 
         internal static NoteGroup NextNoteGroup(int setIndex = -1)
         {
-            if (noteGroup.tempoChanges.Count                           == 0 ||
-                Math.Abs(noteGroup.tempoChanges[^1].time - tempo.time) > float.Epsilon)
-                noteGroup.tempoChanges.Add(tempo);
-
             noteGroup.notes.TrimExcess();
             noteGroup.slidePaths.TrimExcess();
-            noteGroup.tempoChanges.TrimExcess();
             noteGroup.speedVariationChanges.TrimExcess();
             noteGroup.speedMultiplierChanges.TrimExcess();
 
-            if (!noteGroupAddedToChart)
+            if (!noteGroupAddedToChart && (noteGroup.notes.Count > 0 || noteGroup.slidePaths.Count > 0))
                 chart.noteGroups.Add(noteGroup);
 
             return setIndex == -1
-                ? noteGroup = new NoteGroup()
+                ? noteGroup = new NoteGroup
+                {
+                    speedVariationChanges =
+                    [
+                        new SpeedChange
+                        {
+                            time  = 0,
+                            speed = 1
+                        }
+                    ],
+                    speedMultiplierChanges =
+                    [
+                        new SpeedChange
+                        {
+                            time  = 0,
+                            speed = 1
+                        }
+                    ]
+                }
                 : noteGroup = chart.noteGroups[setIndex];
         }
 
@@ -547,7 +574,7 @@ namespace SimaiSharp
             {
                 currentByte = MoveNext(bytes);
 
-                if (currentByte == Constants.NewSlideOrCommandArgumentChar)
+                if (currentByte is Constants.NewSlideOrCommandArgumentChar or Constants.HashChar)
                     separatorIndex = currentIndex - 1;
 
                 if (_isEndOfFile)
@@ -562,7 +589,7 @@ namespace SimaiSharp
 
             try
             {
-                command.Deserialize(bytes[separatorIndex..(currentIndex - 1)]);
+                command.Deserialize(bytes[(separatorIndex + 1)..(currentIndex - 1)]);
             }
             catch (Exception)
             {

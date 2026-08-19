@@ -24,15 +24,14 @@ namespace SimaiSharp.Commands
 
             var noteGroup = SimaiDeserializer.NextNoteGroup(existingNoteGroupIndex);
 
-
             if (existingNoteGroupIndex != -1)
                 return;
 
-            noteGroup.speedVariationChanges.Add(new SpeedChange
+            noteGroup.speedVariationChanges[0] = new SpeedChange
             {
                 time  = 0,
                 speed = value
-            });
+            };
         }
     }
 }

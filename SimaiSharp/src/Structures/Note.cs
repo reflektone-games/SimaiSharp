@@ -4,7 +4,6 @@ namespace SimaiSharp.Structures
 {
     public sealed class Note
     {
-        public int    index;
         public double time;
 
         /// <summary>

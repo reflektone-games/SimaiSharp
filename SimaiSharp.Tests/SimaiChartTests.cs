@@ -151,4 +151,29 @@ public class SimaiChartTests
             Assert.That(chart.noteGroups[0].slidePaths[0].isMine,   Is.True);
         }
     }
+
+    [Test]
+    public void CanReadHiSpeed()
+    {
+        var target = Make("(60)<HS*1.5>1,1");
+        var chart  = SimaiConvert.Deserialize(target);
+
+        Assert.That(chart.noteGroups[0].notes,         Has.Count.EqualTo(2));
+        Assert.That(chart.noteGroups[0].notes[1].time, Is.EqualTo(1));
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(chart.noteGroups[0].speedVariationChanges,          Has.Count.EqualTo(1));
+            Assert.That(chart.noteGroups[0].speedVariationChanges[0].time,  Is.EqualTo(0));
+            Assert.That(chart.noteGroups[0].speedVariationChanges[0].speed, Is.EqualTo(1.5));
+        }
+    }
+
+    [Test]
+    public void CanReadJump()
+    {
+        var target = Make("(60)<#0>1,1,<#0>2,3,");
+        var chart  = SimaiConvert.Deserialize(target);
+        Assert.That(chart.noteGroups[0].notes, Has.Count.EqualTo(4));
+    }
 }

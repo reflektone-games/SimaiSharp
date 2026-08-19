@@ -4,8 +4,6 @@ namespace SimaiSharp.Structures
 {
     public sealed class SlidePath
     {
-        public int index;
-
         public bool isBreak;
         public bool isMine;
 

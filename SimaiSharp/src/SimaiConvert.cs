@@ -15,7 +15,8 @@ namespace SimaiSharp
             AddCommand<HiSpeedCommand>("HS");
             AddCommand<SpeedMultiplierCommand>("SM");
             AddCommand<SpeedVariationCommand>("SV");
-            AddCommand<TimingGroupCommand>("TG");
+            AddCommand<NoteGroupCommand>("G");
+            AddCommand<JumpCommand>(string.Empty);
         }
 
         public static SimaiChart Deserialize(ReadOnlySpan<byte> bytes) => SimaiDeserializer.Deserialize(bytes);
