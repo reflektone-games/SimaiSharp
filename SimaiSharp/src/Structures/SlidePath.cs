@@ -2,24 +2,28 @@
 
 namespace SimaiSharp.Structures
 {
-    public class SlidePath
+    public sealed class SlidePath
     {
+        public int index;
+
         public bool isBreak;
         public bool isMine;
+
+        public double time;
 
         /// <summary>
         /// The intro delay of a slide before it starts moving.
         /// </summary>
-        public float delay;
+        public double delay;
 
-        public float duration;
+        public double duration;
 
         /// <summary>
         /// True if this slide path doesn't fade and scale up the star indicator during the delay.
         /// </summary>
         public bool noIntroAnimation;
 
-        public List<int>          vertices = new();
-        public List<SlideSegment> segments = new();
+        public List<int>          vertices = [];
+        public List<SlideSegment> segments = [];
     }
 }

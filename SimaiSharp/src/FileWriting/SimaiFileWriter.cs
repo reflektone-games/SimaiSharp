@@ -1,22 +1,23 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace SimaiSharp.FileWriting;
-
-public class SimaiFileWriter(Dictionary<string, string>? mappings = null)
+namespace SimaiSharp.FileWriting
 {
-    private readonly Dictionary<string, string> _mappings = mappings ?? new Dictionary<string, string>();
-
-    public void AddParameter(string    key, string     value) => _mappings.Add(key, value);
-    public bool TryGetValue(string     key, out string value) => _mappings.TryGetValue(key, out value);
-    public bool RemoveParameter(string key) => _mappings.Remove(key);
-
-    public void WriteToStream(Stream stream)
+    public class SimaiFileWriter(Dictionary<string, string>? mappings = null)
     {
-        using var streamWriter = new StreamWriter(stream);
-        foreach (var (key, value) in _mappings)
+        private readonly Dictionary<string, string> _mappings = mappings ?? new Dictionary<string, string>();
+
+        public void AddParameter(string    key, string     value) => _mappings.Add(key, value);
+        public bool TryGetValue(string     key, out string value) => _mappings.TryGetValue(key, out value);
+        public bool RemoveParameter(string key) => _mappings.Remove(key);
+
+        public void WriteToStream(Stream stream)
         {
-            streamWriter.WriteLine($"&{key}={value}");
+            using var streamWriter = new StreamWriter(stream);
+            foreach (var (key, value) in _mappings)
+            {
+                streamWriter.WriteLine($"&{key}={value}");
+            }
         }
     }
 }

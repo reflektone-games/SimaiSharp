@@ -2,20 +2,20 @@ namespace SimaiSharp.Structures
 {
     public struct TempoChange
     {
-        public float time;
-        public float tempo;
-        public float subdivisions;
+        public double time;
+        public double tempo;
+        public double subdivisions;
 
         /// <summary>
         /// Used in duration parsing.
         /// </summary>
-        public float SecondsPerBar => tempo == 0 ? 0 : 60f / tempo;
+        public double SecondsPerBar => tempo == 0 ? 0 : 60f / tempo;
 
-        public float SecondsPerBeat => SecondsPerBar / ((subdivisions == 0 ? 4 : subdivisions) / 4);
+        public double SecondsPerBeat => SecondsPerBar / ((subdivisions == 0 ? 4 : subdivisions) / 4);
 
         public bool IsValid => time >= 0;
 
-        public void SetSeconds(float value)
+        public void SetSeconds(double value)
         {
             tempo        = 60f / value;
             subdivisions = 4;

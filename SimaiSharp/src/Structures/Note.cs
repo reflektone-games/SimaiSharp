@@ -4,10 +4,13 @@ namespace SimaiSharp.Structures
 {
     public sealed class Note
     {
+        public int    index;
+        public double time;
+
         /// <summary>
         /// The duration of this note, in seconds.
         /// </summary>
-        public float length;
+        public double length;
 
         /// <summary>
         /// What category this note should be counted as in results.

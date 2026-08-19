@@ -2,11 +2,10 @@
 
 namespace SimaiSharp.Structures
 {
-    public class SimaiChart
+    public sealed class SimaiChart
     {
-        public float             finishTiming;
-        public List<NoteFrame>   noteFrames   = new();
-        public List<TempoChange> tempoChanges = new();
-        public ulong               hash;
+        public double          finishTiming;
+        public List<NoteGroup> noteGroups = [];
+        public ulong           hash;
     }
 }

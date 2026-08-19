@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using SimaiSharp.Utilities;
 
 namespace SimaiSharp.FileReading
 {
@@ -56,7 +57,7 @@ namespace SimaiSharp.FileReading
                     {
                         readingKey = false;
                         var keyLength = byteIndex - keyStart;
-                        keyHash    = ComputeHash(bytes.Slice(keyStart, keyLength));
+                        keyHash    = Hashing.ComputeHash(bytes.Slice(keyStart, keyLength));
                         valueStart = byteIndex + 1;
                         break;
                     }
@@ -146,7 +147,7 @@ namespace SimaiSharp.FileReading
 
         public bool TryGetValueSpan(string key, out ReadOnlySpan<byte> result)
         {
-            var keyHash = ComputeHash(key);
+            var keyHash = Hashing.ComputeHash(key);
 
             if (_entries.TryGetValue(keyHash, out var entry))
             {
@@ -178,33 +179,6 @@ namespace SimaiSharp.FileReading
         public string GetString(ReadOnlySpan<byte> bytes, MemorySlice slice) =>
             Encoding.UTF8.GetString(bytes.Slice(slice.offset, slice.length));
 
-        /// <summary>
-        /// https://stackoverflow.com/questions/16340/how-do-i-generate-a-hashcode-from-a-byte-array-in-c
-        /// </summary>
-        public static int ComputeHash(ReadOnlySpan<byte> bytes)
-        {
-            const int p = 16777619;
-            unchecked
-            {
-                var hash = (int)2166136261;
-                foreach (var @byte in bytes)
-                    hash = (hash ^ @byte) * p;
-                return hash;
-            }
-        }
-
-        public static int ComputeHash(ReadOnlySpan<char> chars)
-        {
-            const int p = 16777619;
-            unchecked
-            {
-                var hash = (int)2166136261;
-                foreach (var @char in chars)
-                    for (var c = @char; c > 0; c >>= 8)
-                        hash = (hash ^ (c & 0xFF)) * p;
-                return hash;
-            }
-        }
 
         public readonly struct MemorySlice(int offset, int length)
         {
