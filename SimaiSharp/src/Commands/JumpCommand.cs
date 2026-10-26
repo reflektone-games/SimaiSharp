@@ -10,7 +10,7 @@ public sealed class JumpCommand : Command
         var key = Hashing.ComputeHash(chartSpan);
 
         if (SimaiDeserializer.JumpMarkers.TryGetValue(key, out var time))
-            SimaiDeserializer.time = time;
+            SimaiDeserializer.SetTime(time);
         else
             SimaiDeserializer.JumpMarkers[key] = SimaiDeserializer.time;
     }

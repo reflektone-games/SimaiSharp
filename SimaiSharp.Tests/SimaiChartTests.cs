@@ -88,21 +88,18 @@ public class SimaiChartTests
             Assert.That(chart.noteGroups[0].notes[1].time,     Is.Zero);
             Assert.That(chart.noteGroups[0].notes[1].location, Is.EqualTo(1));
 
-            Assert.That(chart.noteGroups[0].notes[2].styles &= NoteStyles.NewGroup, Is.Not.Zero);
-            Assert.That(chart.noteGroups[0].notes[2].time,                          Is.EqualTo(1));
-            Assert.That(chart.noteGroups[0].notes[2].location,                      Is.EqualTo(2));
+            Assert.That(chart.noteGroups[0].notes[2].styles &= NoteStyles.ForceSingleFrame, Is.Not.Zero);
+            Assert.That(chart.noteGroups[0].notes[2].time,                                  Is.EqualTo(1));
+            Assert.That(chart.noteGroups[0].notes[2].location,                              Is.EqualTo(2));
 
             Assert.That(chart.noteGroups[0].notes[3].time,     Is.EqualTo(1));
             Assert.That(chart.noteGroups[0].notes[3].location, Is.EqualTo(3));
 
-            Assert.That(chart.noteGroups[0].notes[4].styles &= NoteStyles.NewGroup,    Is.Not.Zero);
-            Assert.That(chart.noteGroups[0].notes[4].styles &= NoteStyles.ForceSingle, Is.Not.Zero);
-            Assert.That(chart.noteGroups[0].notes[4].time,                             Is.EqualTo(1));
-            Assert.That(chart.noteGroups[0].notes[4].location,                         Is.EqualTo(6));
+            Assert.That(chart.noteGroups[0].notes[4].time,     Is.EqualTo(1));
+            Assert.That(chart.noteGroups[0].notes[4].location, Is.EqualTo(6));
 
-            Assert.That(chart.noteGroups[0].notes[5].styles &= NoteStyles.ForceSingle, Is.Not.Zero);
-            Assert.That(chart.noteGroups[0].notes[5].time,                             Is.EqualTo(1));
-            Assert.That(chart.noteGroups[0].notes[5].location,                         Is.EqualTo(7));
+            Assert.That(chart.noteGroups[0].notes[5].time,     Is.EqualTo(1));
+            Assert.That(chart.noteGroups[0].notes[5].location, Is.EqualTo(7));
         }
     }
 
@@ -163,9 +160,9 @@ public class SimaiChartTests
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(chart.noteGroups[0].speedVariationChanges,          Has.Count.EqualTo(1));
-            Assert.That(chart.noteGroups[0].speedVariationChanges[0].time,  Is.EqualTo(0));
-            Assert.That(chart.noteGroups[0].speedVariationChanges[0].speed, Is.EqualTo(1.5));
+            Assert.That(chart.noteGroups[0].paceChanges,          Has.Count.EqualTo(1));
+            Assert.That(chart.noteGroups[0].paceChanges[0].time,  Is.EqualTo(0));
+            Assert.That(chart.noteGroups[0].paceChanges[0].value, Is.EqualTo(1.5));
         }
     }
 

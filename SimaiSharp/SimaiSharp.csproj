@@ -7,10 +7,6 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
-    <ItemGroup>
-        <Folder Include="docs"/>
-    </ItemGroup>
-
     <Target Name="CopyPublishOutputToAstroDX" AfterTargets="Publish">
         <ItemGroup>
             <PublishOutputFiles Include="$(PublishDir)**\*.*"/>

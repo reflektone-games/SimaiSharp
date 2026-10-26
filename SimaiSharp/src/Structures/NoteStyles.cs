@@ -5,15 +5,14 @@ namespace SimaiSharp.Structures
     [Flags]
     public enum NoteStyles
     {
-        None        = 0,
-        Hold        = 1 << 0,
-        Star        = 1 << 1,
-        Spinning    = 1 << 2,
-        Ex          = 1 << 3,
-        Fireworks   = 1 << 4,
-        Mine        = 1 << 5,
-        ForceSingle = 1 << 6,
-        ForceEach   = 1 << 7,
-        NewGroup    = 1 << 8
+        None             = 0,
+        Hold             = 1 << 0,
+        Star             = 1 << 1,
+        Spinning         = 1 << 2,
+        Ex               = 1 << 3,
+        Fireworks        = 1 << 4,
+        Mine             = 1 << 5,
+        ForceSingleFrame = 1 << 6,
+        ForceEachFrame   = 1 << 7,
     }
 }

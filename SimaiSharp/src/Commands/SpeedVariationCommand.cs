@@ -15,10 +15,10 @@ namespace SimaiSharp.Commands
 
             var value = double.Parse(charSpan, NumberStyles.Float, CultureInfo.InvariantCulture);
 
-            SimaiDeserializer.noteGroup.speedVariationChanges.Add(new SpeedChange
+            SimaiDeserializer.noteGroup.paceChanges.Add(new State
             {
                 time  = SimaiDeserializer.time,
-                speed = value
+                value = value
             });
         }
     }

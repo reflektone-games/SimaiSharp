@@ -1,8 +1,8 @@
 namespace SimaiSharp.Structures
 {
-    public struct SpeedChange
+    public struct State
     {
-        public double speed;
+        public double value;
         public double time;
     }
 }

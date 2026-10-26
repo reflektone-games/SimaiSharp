@@ -16,21 +16,21 @@ namespace SimaiSharp.Commands
             var value = double.Parse(charSpan, NumberStyles.Float, CultureInfo.InvariantCulture);
 
             var existingNoteGroupIndex =
-                SimaiDeserializer.chart.noteGroups.FindIndex(n => n.speedMultiplierChanges.Count == 0 &&
-                                                                  n.speedVariationChanges.Count  == 1 &&
-                                                                  n.speedVariationChanges[0].speed
+                SimaiDeserializer.chart.noteGroups.FindIndex(n => n.scaleChanges.Count == 0 &&
+                                                                  n.paceChanges.Count  == 1 &&
+                                                                  n.paceChanges[0].value
                                                                    .Equals(value) &&
-                                                                  n.speedVariationChanges[0].time == 0);
+                                                                  n.paceChanges[0].time == 0);
 
             var noteGroup = SimaiDeserializer.NextNoteGroup(existingNoteGroupIndex);
 
             if (existingNoteGroupIndex != -1)
                 return;
 
-            noteGroup.speedVariationChanges[0] = new SpeedChange
+            noteGroup.paceChanges[0] = new State
             {
                 time  = 0,
-                speed = value
+                value = value
             };
         }
     }

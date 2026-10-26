@@ -14,7 +14,9 @@ namespace SimaiSharp
         public static readonly Dictionary<int, int>    NoteGroupAliases = new();
         public static readonly Dictionary<int, double> JumpMarkers      = new();
 
-        private static int currentIndex;
+        private static int  charIndex;
+        private static int  noteIndex;
+        private static Note firstNoteOfFrame = null!;
 
         internal static double      time;
         internal static SimaiChart  chart = null!;
@@ -31,9 +33,13 @@ namespace SimaiSharp
 
         public static SimaiChart Deserialize(ReadOnlySpan<byte> bytes)
         {
+            if (bytes.Length == 0)
+                return new SimaiChart();
+
             NoteGroupAliases.Clear();
             JumpMarkers.Clear();
-            currentIndex = 0;
+            charIndex = 0;
+            noteIndex = 0;
 
             time                  = 0;
             tempo                 = new TempoChange();
@@ -48,42 +54,41 @@ namespace SimaiSharp
             _isEndOfFile = false;
             _hasher.Clear();
 
-            while (currentIndex < bytes.Length && !_isEndOfFile)
-                ConsumeNext(bytes);
+            while (charIndex < bytes.Length && !_isEndOfFile)
+                Consume(bytes);
 
             NextNoteGroup(0);
             chart.finishTiming = time;
             chart.hash         = _hasher.GetHash();
             foreach (var group in chart.noteGroups)
             {
-                group.notes.Sort((a,                  b) => a.time.CompareTo(b.time));
-                group.slidePaths.Sort((a,             b) => a.time.CompareTo(b.time));
-                group.speedVariationChanges.Sort((a,  b) => a.time.CompareTo(b.time));
-                group.speedMultiplierChanges.Sort((a, b) => a.time.CompareTo(b.time));
+                group.notes.Sort((a,        b) => a.time.CompareTo(b.time));
+                group.slidePaths.Sort((a,   b) => a.time.CompareTo(b.time));
+                group.paceChanges.Sort((a,  b) => a.time.CompareTo(b.time));
+                group.scaleChanges.Sort((a, b) => a.time.CompareTo(b.time));
             }
 
             return chart;
         }
 
-        private static void ConsumeNext(ReadOnlySpan<byte> bytes)
+        private static void Consume(ReadOnlySpan<byte> bytes)
         {
-            var currentByte = MoveNext(bytes);
+            var currentByte = Pop(bytes);
 
             switch (currentByte)
             {
                 // A single E without any trailing numbers signify EOF
-                case Constants.SensorCharEndOrEof
-                    when PeekNext(bytes) is < Constants.ButtonCharStart or > Constants.ButtonCharEnd:
+                case Constants.SensorCharEndOrEof when Peek(bytes) is < Constants.ButtonCharStart or > Constants.ButtonCharEnd:
                     _isEndOfFile = true;
                     return;
                 case Constants.TimeStepChar:
-                    note.styles |= NoteStyles.NewGroup;
-                    note.styles &= ~NoteStyles.ForceSingle | NoteStyles.ForceEach;
-                    time        += tempo.SecondsPerBeat;
+                    firstNoteOfFrame =  note;
+                    note.styles      =  NoteStyles.None;
+                    time             += tempo.SecondsPerBeat;
                     break;
                 case Constants.SplitFrameChar:
-                    note.styles |= NoteStyles.NewGroup;
-                    note.styles &= ~NoteStyles.ForceSingle | NoteStyles.ForceEach;
+                    firstNoteOfFrame.styles |= NoteStyles.ForceSingleFrame;
+                    firstNoteOfFrame.styles &= ~NoteStyles.ForceEachFrame;
                     break;
                 case Constants.TempoBracketOpenChar:
                     ConsumeTempo(bytes);
@@ -95,7 +100,7 @@ namespace SimaiSharp
                     ConsumeCommand(bytes);
                     break;
                 case Constants.ForceEachChar:
-                    note.styles |= NoteStyles.ForceEach;
+                    firstNoteOfFrame.styles |= NoteStyles.ForceEachFrame;
                     break;
                 case >= Constants.ButtonCharStart and <= Constants.ButtonCharEnd
                      or >= Constants.SensorCharStart and <= Constants.SensorCharEndOrEof:
@@ -116,31 +121,17 @@ namespace SimaiSharp
         {
             noteGroup.notes.TrimExcess();
             noteGroup.slidePaths.TrimExcess();
-            noteGroup.speedVariationChanges.TrimExcess();
-            noteGroup.speedMultiplierChanges.TrimExcess();
+            noteGroup.paceChanges.TrimExcess();
+            noteGroup.scaleChanges.TrimExcess();
 
-            if (!noteGroupAddedToChart && (noteGroup.notes.Count > 0 || noteGroup.slidePaths.Count > 0))
+            if (!noteGroupAddedToChart && !noteGroup.IsEmpty)
                 chart.noteGroups.Add(noteGroup);
 
             return setIndex == -1
                 ? noteGroup = new NoteGroup
                 {
-                    speedVariationChanges =
-                    [
-                        new SpeedChange
-                        {
-                            time  = 0,
-                            speed = 1
-                        }
-                    ],
-                    speedMultiplierChanges =
-                    [
-                        new SpeedChange
-                        {
-                            time  = 0,
-                            speed = 1
-                        }
-                    ]
+                    paceChanges  = [new State { time = 0, value = 1 }],
+                    scaleChanges = [new State { time = 0, value = 1 }]
                 }
                 : noteGroup = chart.noteGroups[setIndex];
         }
@@ -163,7 +154,7 @@ namespace SimaiSharp
 
             while (true)
             {
-                currentByte = MoveNext(bytes);
+                currentByte = Pop(bytes);
 
                 switch (currentByte)
                 {
@@ -207,7 +198,7 @@ namespace SimaiSharp
                         break;
                     case Constants.ForceStarChar:
                         note.styles |= NoteStyles.Star;
-                        if (PeekNext(bytes) == Constants.ForceStarChar)
+                        if (Peek(bytes) == Constants.ForceStarChar)
                             note.styles |= NoteStyles.Spinning;
                         break;
 
@@ -254,7 +245,7 @@ namespace SimaiSharp
                         if (slidePath != null && slidePath.segments.Count != 0)
                             noteGroup.slidePaths.Add(slidePath);
 
-                        currentIndex--;
+                        charIndex--;
                         goto FINALIZE;
                 }
             }
@@ -270,11 +261,9 @@ namespace SimaiSharp
                 note.length = slidePath.delay;
 
             note.time = time;
-            noteGroup.notes.Add(note);
-            var newNote = new Note();
-            newNote.styles |= note.styles & NoteStyles.ForceSingle;
-            newNote.styles |= note.styles & NoteStyles.ForceEach;
-            note           =  newNote;
+            noteGroup.notes.Insert(noteIndex, note);
+            noteIndex++;
+            note = new Note();
             return;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -287,10 +276,10 @@ namespace SimaiSharp
 
         private static void ConsumeSlide(ReadOnlySpan<byte> bytes, byte currentByte, SlidePath slidePath)
         {
-            var secondByte = MoveNext(bytes);
+            var secondByte = Pop(bytes);
             var targetLocation =
                 ConsumeLocation(
-                    bytes, secondByte is Constants.CurveCwChar or Constants.CurveCcwChar ? MoveNext(bytes) : secondByte);
+                    bytes, secondByte is Constants.CurveCwChar or Constants.CurveCcwChar ? Pop(bytes) : secondByte);
 
             if (_isEndOfFile)
                 ThrowContext<ChartFormatException>();
@@ -324,7 +313,7 @@ namespace SimaiSharp
             if (slideType != SlideType.EdgeFold)
                 return;
 
-            targetLocation = ConsumeLocation(bytes, MoveNext(bytes));
+            targetLocation = ConsumeLocation(bytes, Pop(bytes));
 
             if (_isEndOfFile)
                 ThrowContext<ChartFormatException>();
@@ -337,14 +326,14 @@ namespace SimaiSharp
             var (startLine, startColumn) = GetCurrentPosition();
 
             byte currentByte;
-            var  startInclusive = currentIndex;
+            var  startInclusive = charIndex;
             var  hashIndex      = -1;
             var  colonIndex     = -1;
             var  localTempo     = tempo;
 
             do
             {
-                currentByte = MoveNext(bytes);
+                currentByte = Pop(bytes);
 
                 if (_isEndOfFile)
                     ThrowContext<ChartFormatException>();
@@ -352,17 +341,17 @@ namespace SimaiSharp
                 switch (currentByte)
                 {
                     case Constants.HashChar:
-                        hashIndex = currentIndex - 1;
+                        hashIndex = charIndex - 1;
                         break;
                     case Constants.ColonChar:
-                        colonIndex = currentIndex - 1;
+                        colonIndex = charIndex - 1;
                         break;
                 }
             } while (currentByte != Constants.DurationCloseChar);
 
             if (hashIndex == startInclusive)
             {
-                if (!TryParseFloat(bytes[(startInclusive + 1)..(currentIndex - 1)], out var result))
+                if (!TryParseFloat(bytes[(startInclusive + 1)..(charIndex - 1)], out var result))
                     ThrowContext<TypeMismatchException>(startLine, startColumn);
 
                 note.length = result;
@@ -384,7 +373,7 @@ namespace SimaiSharp
             if (!TryParseFloat(bytes[startInclusive..colonIndex], out var nominator))
                 ThrowContext<TypeMismatchException>(startLine, startColumn);
 
-            if (!TryParseFloat(bytes[(colonIndex + 1)..(currentIndex - 1)], out var denominator))
+            if (!TryParseFloat(bytes[(colonIndex + 1)..(charIndex - 1)], out var denominator))
                 ThrowContext<TypeMismatchException>(startLine, startColumn);
 
             note.length = localTempo.SecondsPerBar / (nominator / 4) * denominator;
@@ -398,7 +387,7 @@ namespace SimaiSharp
             var (startLine, startColumn) = GetCurrentPosition();
 
             byte currentByte;
-            var  startInclusive = currentIndex;
+            var  startInclusive = charIndex;
             var  hashIndex      = 0;
             var  hashCount      = 0;
             var  colonIndex     = -1;
@@ -406,7 +395,7 @@ namespace SimaiSharp
 
             do
             {
-                currentByte = MoveNext(bytes);
+                currentByte = Pop(bytes);
 
                 if (_isEndOfFile)
                     ThrowContext<ChartFormatException>(startLine, startColumn);
@@ -415,11 +404,11 @@ namespace SimaiSharp
                 {
                     case Constants.HashChar:
                         if (hashCount == 0)
-                            hashIndex = currentIndex - 1;
+                            hashIndex = charIndex - 1;
                         hashCount++;
                         break;
                     case Constants.ColonChar:
-                        colonIndex = currentIndex - 1;
+                        colonIndex = charIndex - 1;
                         break;
                 }
             } while (currentByte != Constants.DurationCloseChar);
@@ -436,7 +425,7 @@ namespace SimaiSharp
                     else
                         ThrowContext<TypeMismatchException>(startLine, startColumn);
 
-                    if (!TryParseFloat(bytes[(hashIndex + hashCount)..(currentIndex - 1)], out var duration))
+                    if (!TryParseFloat(bytes[(hashIndex + hashCount)..(charIndex - 1)], out var duration))
                         ThrowContext<TypeMismatchException>(startLine, startColumn);
 
                     slidePath.duration += duration;
@@ -477,7 +466,7 @@ namespace SimaiSharp
                     if (!TryParseFloat(bytes[(hashIndex + hashCount)..colonIndex], out var nominator))
                         ThrowContext<TypeMismatchException>(startLine, startColumn);
 
-                    if (!TryParseFloat(bytes[(colonIndex + 1)..(currentIndex - 1)], out var denominator))
+                    if (!TryParseFloat(bytes[(colonIndex + 1)..(charIndex - 1)], out var denominator))
                         ThrowContext<TypeMismatchException>(startLine, startColumn);
 
                     slidePath.duration += localTempo.SecondsPerBar / (nominator / 4) * denominator;
@@ -489,7 +478,7 @@ namespace SimaiSharp
                     if (!TryParseFloat(bytes[startInclusive..colonIndex], out var nominator))
                         ThrowContext<TypeMismatchException>(startLine, startColumn);
 
-                    if (!TryParseFloat(bytes[(colonIndex + 1)..(currentIndex - 1)], out var denominator))
+                    if (!TryParseFloat(bytes[(colonIndex + 1)..(charIndex - 1)], out var denominator))
                         ThrowContext<TypeMismatchException>(startLine, startColumn);
 
                     slidePath.delay    =  localTempo.SecondsPerBar;
@@ -510,16 +499,16 @@ namespace SimaiSharp
             var (startLine, startColumn) = GetCurrentPosition();
             byte currentByte;
 
-            var startInclusive = currentIndex;
+            var startInclusive = charIndex;
             do
             {
-                currentByte = MoveNext(bytes);
+                currentByte = Pop(bytes);
 
                 if (_isEndOfFile)
                     ThrowContext<ChartFormatException>();
             } while (currentByte != Constants.TempoBracketCloseChar);
 
-            if (!TryParseFloat(bytes[startInclusive..(currentIndex - 1)], out var result))
+            if (!TryParseFloat(bytes[startInclusive..(charIndex - 1)], out var result))
                 ThrowContext<TypeMismatchException>(startLine, startColumn);
 
             tempo.time  = time;
@@ -529,11 +518,11 @@ namespace SimaiSharp
         private static void ConsumeSubdivision(ReadOnlySpan<byte> bytes)
         {
             var (startLine, startColumn) = GetCurrentPosition();
-            var startInclusive    = currentIndex;
+            var startInclusive    = charIndex;
             var explicitTempoMode = false;
 
             // Consume the first char to see if we need to enable explicitTempoMode
-            var currentByte = MoveNext(bytes);
+            var currentByte = Pop(bytes);
 
             if (_isEndOfFile)
                 ThrowContext<ChartFormatException>();
@@ -546,13 +535,13 @@ namespace SimaiSharp
 
             do
             {
-                currentByte = MoveNext(bytes);
+                currentByte = Pop(bytes);
 
                 if (_isEndOfFile)
                     ThrowContext<ChartFormatException>();
             } while (currentByte != Constants.SubdivisionCloseChar);
 
-            if (!TryParseFloat(bytes[startInclusive..(currentIndex - 1)], out var result))
+            if (!TryParseFloat(bytes[startInclusive..(charIndex - 1)], out var result))
                 ThrowContext<TypeMismatchException>(startLine, startColumn);
 
             tempo.time = time;
@@ -568,14 +557,14 @@ namespace SimaiSharp
             var (startLine, startColumn) = GetCurrentPosition();
             byte currentByte;
 
-            var startInclusive = currentIndex;
+            var startInclusive = charIndex;
             var separatorIndex = -1;
             do
             {
-                currentByte = MoveNext(bytes);
+                currentByte = Pop(bytes);
 
                 if (currentByte is Constants.NewSlideOrCommandArgumentChar or Constants.HashChar)
-                    separatorIndex = currentIndex - 1;
+                    separatorIndex = charIndex - 1;
 
                 if (_isEndOfFile)
                     ThrowContext<ChartFormatException>(startLine, startColumn);
@@ -589,7 +578,7 @@ namespace SimaiSharp
 
             try
             {
-                command.Deserialize(bytes[(separatorIndex + 1)..(currentIndex - 1)]);
+                command.Deserialize(bytes[(separatorIndex + 1)..(charIndex - 1)]);
             }
             catch (Exception)
             {
@@ -628,7 +617,7 @@ namespace SimaiSharp
 
             var result = ((currentByte - Constants.SensorCharStart) << 4) + 0xa0;
 
-            currentByte = MoveNext(bytes);
+            currentByte = Pop(bytes);
 
             if (_isEndOfFile)
                 ThrowContext<ChartFormatException>();
@@ -636,7 +625,7 @@ namespace SimaiSharp
             // Use case: C sensor locations (button is omitted)
             if (currentByte is < Constants.ButtonCharStart or > Constants.ButtonCharEnd)
             {
-                currentIndex--;
+                charIndex--;
                 return result;
             }
 
@@ -677,20 +666,20 @@ namespace SimaiSharp
         /// </summary>
         /// <param name="bytes"></param>
         /// <returns></returns>
-        private static byte MoveNext(ReadOnlySpan<byte> bytes)
+        private static byte Pop(ReadOnlySpan<byte> bytes)
         {
             byte currentByte;
             var  commentCharCount = 0;
             do
             {
-                if (currentIndex >= bytes.Length)
+                if (charIndex >= bytes.Length)
                 {
                     _isEndOfFile = true;
                     return 0;
                 }
 
                 // Reads the current index, then increment
-                currentByte = bytes[currentIndex++];
+                currentByte = bytes[charIndex++];
                 currentColumn++;
 
                 switch (currentByte)
@@ -714,13 +703,48 @@ namespace SimaiSharp
             return currentByte;
         }
 
-        private static byte PeekNext(ReadOnlySpan<byte> bytes)
+        private static byte Peek(ReadOnlySpan<byte> bytes)
         {
-            if (currentIndex >= bytes.Length)
+            if (charIndex >= bytes.Length)
                 return 0;
-            return bytes[currentIndex];
+            return bytes[charIndex];
         }
 
         private static (int line, int column) GetCurrentPosition() => (currentLine, currentColumn);
+
+        public static void SetTime(double value)
+        {
+            noteIndex        = FindInsertIndexForTime(value);
+            firstNoteOfFrame = note = new Note();
+            for (var i = noteIndex - 1; i >= 0; i--)
+            {
+                var seekNote = noteGroup.notes[i];
+                if (seekNote.time < value)
+                    break;
+                firstNoteOfFrame = seekNote;
+            }
+        }
+
+        private static int FindInsertIndexForTime(double value)
+        {
+            if (noteGroup.notes[0].time > value)
+                return 0;
+
+            if (noteGroup.notes[^1].time < value)
+                return noteGroup.notes.Count;
+
+            var low  = 0;
+            var high = noteGroup.notes.Count - 1;
+            while (low != high)
+            {
+                var mid = (low + high) / 2;
+                if (noteGroup.notes[mid].time <= value)
+                    low = mid + 1;
+                else
+                    high = mid;
+            }
+
+            return low;
+        }
     }
 }

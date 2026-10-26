@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.IO.MemoryMappedFiles;
 
-namespace SimaiSharp.FileReading
+namespace SimaiSharp.IO
 {
     internal sealed unsafe class MemoryMappedFileReader : IFileReader
     {

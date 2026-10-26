@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace SimaiSharp.FileWriting
+namespace SimaiSharp.IO
 {
     public class SimaiFileWriter(Dictionary<string, string>? mappings = null)
     {

@@ -2,7 +2,7 @@ using System;
 using System.Buffers;
 using System.IO;
 
-namespace SimaiSharp.FileReading
+namespace SimaiSharp.IO
 {
     internal sealed class BufferedFileReader : IFileReader
     {

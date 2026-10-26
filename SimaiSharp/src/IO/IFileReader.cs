@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 
-namespace SimaiSharp.FileReading
+namespace SimaiSharp.IO
 {
     public interface IFileReader : IDisposable
     {

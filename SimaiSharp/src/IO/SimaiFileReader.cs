@@ -4,7 +4,7 @@ using System.IO;
 using System.Text;
 using SimaiSharp.Utilities;
 
-namespace SimaiSharp.FileReading
+namespace SimaiSharp.IO
 {
     public sealed class SimaiFileReader(IFileReader fileReader) : IDisposable
     {
