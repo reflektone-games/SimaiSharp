@@ -2,7 +2,7 @@ using SimaiSharp.Utilities;
 
 namespace SimaiSharp.Structures
 {
-    public sealed class Note
+    public sealed class Note : ITimed
     {
         public double time;
 
@@ -33,5 +33,7 @@ namespace SimaiSharp.Structures
         /// <example>0xC0 == Touch C</example>
         /// <remarks>Use <see cref="LocationUtilities"/> to get the index and group.</remarks>
         public int location;
+
+        public double GetTime() => time;
     }
 }

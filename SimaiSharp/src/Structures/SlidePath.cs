@@ -2,7 +2,7 @@
 
 namespace SimaiSharp.Structures
 {
-    public sealed class SlidePath
+    public sealed class SlidePath : ITimed
     {
         public bool isBreak;
         public bool isMine;
@@ -23,5 +23,7 @@ namespace SimaiSharp.Structures
 
         public List<int>          vertices = [];
         public List<SlideSegment> segments = [];
+
+        public double GetTime() => time;
     }
 }
