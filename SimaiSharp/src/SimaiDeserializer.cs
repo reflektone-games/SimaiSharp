@@ -211,11 +211,11 @@ namespace SimaiSharp
         private static int FindInsertIndexForTime<T>(IReadOnlyList<T> timedList, double value, int initialIndex = -1)
             where T : ITimed
         {
-            if (timedList.Count == 0 || timedList[0].GetTime() > value)
-                return 0;
-
             if (timedList[^1].GetTime() < value)
                 return timedList.Count;
+
+            if (timedList.Count == 0 || timedList[0].GetTime() > value)
+                return 0;
 
             var low  = 0;
             var high = timedList.Count - 1;
