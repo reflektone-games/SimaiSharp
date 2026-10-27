@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using SimaiSharp.ErrorHandling;
 using SimaiSharp.Processors;
 using SimaiSharp.Structures;
@@ -191,10 +192,9 @@ namespace SimaiSharp
 
         internal static (int line, int column) GetCurrentPosition() => (currentLine, currentColumn);
 
-        // TODO)) Improve performance by seeding initial search index
         public static void SetTime(double value)
         {
-            noteIndex        = FindInsertIndexForTime(noteGroup.notes, value);
+            noteIndex        = FindInsertIndexForTime(noteGroup.notes, value, noteIndex);
             firstNoteOfFrame = note = new Note();
             for (var i = noteIndex - 1; i >= 0; i--)
             {
@@ -204,11 +204,12 @@ namespace SimaiSharp
                 firstNoteOfFrame = seekNote;
             }
 
-            slideIndex = FindInsertIndexForTime(noteGroup.slidePaths, value);
+            slideIndex = FindInsertIndexForTime(noteGroup.slidePaths, value, slideIndex);
             time       = value;
         }
 
-        private static int FindInsertIndexForTime<T>(IReadOnlyList<T> timedList, double value) where T : ITimed
+        private static int FindInsertIndexForTime<T>(IReadOnlyList<T> timedList, double value, int initialIndex = -1)
+            where T : ITimed
         {
             if (timedList.Count == 0 || timedList[0].GetTime() > value)
                 return 0;
@@ -218,6 +219,13 @@ namespace SimaiSharp
 
             var low  = 0;
             var high = timedList.Count - 1;
+
+            if (initialIndex >= 0 && initialIndex < timedList.Count)
+                if (timedList[initialIndex].GetTime() <= value)
+                    low = initialIndex;
+                else
+                    high = initialIndex;
+
             while (low != high)
             {
                 var mid = (low + high) / 2;
